@@ -1,0 +1,7 @@
+
+*.csproj
+.vs/SmartFrame/v14/.suo
+Library/
+obj/
+Temp/
+*.sln
