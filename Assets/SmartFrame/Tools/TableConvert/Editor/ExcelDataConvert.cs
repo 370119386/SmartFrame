@@ -189,7 +189,7 @@ namespace Smart.Editor
 
         protected bool generateCSharpCode(ExcelSheetData data)
         {
-            var template_file = System.IO.Path.GetFullPath(Application.dataPath + "/SmartFrame/Tools/TableConvert/TableTemplate.cs");
+            var template_file = System.IO.Path.GetFullPath(Application.dataPath + "/SmartFrame/Tools/TableConvert/Editor/TableTemplate.cs");
             if(!System.IO.File.Exists(template_file))
             {
                 LogErrorFormat(errorDescriptions[(int)ErrorCode.EC_TEMPLATE_FILE_NOT_EXIST],template_file);
