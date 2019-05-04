@@ -390,12 +390,6 @@ namespace Smart.Editor
             var tableItems = Array.CreateInstance(type.Assembly.GetType(string.Format("Smart.Table.{0}Item",data.sheetName))
             ,data.datas.Length);
 
-            //var pt = type.GetProperty("datas",BindingFlags.Public | BindingFlags.Instance);
-            //pt.SetValue(so,tableItems,null);
-
-            //var memberInfo = fieldInfo.FieldType.GetMember("datas");
-            //fieldInfo.FieldType.InvokeMember("Set", BindingFlags.SetField,null, fieldInfo.FieldHandle, tableItems);
-
             for(int i = 0 ; i < data.datas.Length ; ++i)
             {
                 var rowData = data.datas[i];

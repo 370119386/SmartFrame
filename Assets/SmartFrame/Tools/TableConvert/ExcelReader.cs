@@ -15,8 +15,8 @@ namespace Smart.Editor
 {   
     public static class ExcelHelper
     {
-        [MenuItem ("Smart/TableConvert/OpenExcel")]
-        public static void OpenExcel()
+        [MenuItem ("Smart/Table/GenerateCode")]
+        public static void GenerateCode()
         {
             var excel = new ExcelReader();
             var tableRoot = System.IO.Path.GetFullPath(Application.dataPath + "/../Table/");
@@ -25,7 +25,22 @@ namespace Smart.Editor
             foreach (var file in files)
             {
                 if(excel.Open(file))
-                    convert.Convert(excel.SheetData,(int)ExcelDataConvert.ConvertFlag.CF_ReGenerate);
+                    convert.Convert(excel.SheetData,(int)ExcelDataConvert.ConvertFlag.CF_CSharpCode);
+                excel.Close();
+            }
+        }
+
+        [MenuItem ("Smart/Table/GenerateAsset")]
+        public static void GenerateAsset()
+        {
+            var excel = new ExcelReader();
+            var tableRoot = System.IO.Path.GetFullPath(Application.dataPath + "/../Table/");
+            var files = System.IO.Directory.GetFiles(tableRoot,"*.xls");
+            ExcelDataConvert convert = new ExcelDataConvert();
+            foreach (var file in files)
+            {
+                if(excel.Open(file))
+                    convert.Convert(excel.SheetData,(int)ExcelDataConvert.ConvertFlag.CF_TableAsset);
                 excel.Close();
             }
         }
