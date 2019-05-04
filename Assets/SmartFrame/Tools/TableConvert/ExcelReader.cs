@@ -21,9 +21,11 @@ namespace Smart.Editor
             var excel = new ExcelReader();
             var tableRoot = System.IO.Path.GetFullPath(Application.dataPath + "/../Table/");
             var files = System.IO.Directory.GetFiles(tableRoot,"*.xls");
-            for (int i= 0; i < files.Length ; ++i)
+            ExcelDataConvert convert = new ExcelDataConvert();
+            foreach (var file in files)
             {
-                excel.Open(files[i]);
+                if(excel.Open(file))
+                    convert.Convert(excel.SheetData,(int)ExcelDataConvert.ConvertFlag.CF_ReGenerate);
                 excel.Close();
             }
         }
@@ -36,6 +38,47 @@ namespace Smart.Editor
         public string name;
         public string server;
         public string description;
+        public enum VarType
+        {
+            VT_STRING = 0,
+            VT_ENUM,
+            VT_FLOAT,
+            VT_INT,
+            VT_BOOLEAN,
+            VT_COUNT,
+        }
+        public static string[] unit_implementations = new string[(int)VarType.VT_COUNT]
+        {
+            @"public string {0};",
+            @"public {0} e{0};",
+            @"public float {0};",
+            @"public int {0};",
+            @"public bool {0};",
+        };
+        public static string[] array_implementations = new string[(int)VarType.VT_COUNT]
+        {
+            @"public string[] {0};",
+            @"public {0}[] e{0};",
+            @"public float[] {0};",
+            @"public int[] {0};",
+            @"public bool[] {0};",
+        };
+        public static Type[] array_element_types = new Type[(int)VarType.VT_COUNT]
+        {
+            typeof(string),
+            typeof(int),
+            typeof(float),
+            typeof(int),
+            typeof(bool),
+        };
+        public VarType eType;
+        public enum CollectionType
+        {
+            CT_UNIT = 0,
+            CT_ARRAY,
+        }
+        public CollectionType eCollectionType;
+        public Dictionary<int,int> enumValueSet;
     }
     //one-row-data
     public class RowData
@@ -200,6 +243,7 @@ namespace Smart.Editor
                 RowData data = new RowData();
                 data.datas = new string[coloumValue];
                 bool isEmpty = false;
+
                 for(int j = 0 ; j < row.Cells.Count; ++j)
                 {
                     var cell = row.Cells[j];
@@ -301,7 +345,6 @@ namespace Smart.Editor
                 }
                 LogFormat(content);
                 
-                //LogFormat(m_sheet.SheetName);
                 for(int i = 0 ; i < data.datas.Length ; ++i)
                 {
                     content = "[" + (i + 6).ToString() + "]:";
@@ -321,7 +364,7 @@ namespace Smart.Editor
             if(null == cell)
                 return string.Empty;
             if(cell.CellType == CellType.String)
-                return cell.StringCellValue;
+                return cell.StringCellValue.Trim();
             else if(cell.CellType == CellType.Numeric)
                 return cell.NumericCellValue.ToString();
             else if(cell.CellType == CellType.Boolean)
