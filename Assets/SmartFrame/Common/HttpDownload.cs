@@ -7,6 +7,13 @@ using System;
 
 namespace Smart.Common
 {
+    public enum DownLoadStatus
+    {
+        DLS_DOWNLOADING = 0,
+        DLS_FAILED,
+        DLS_RETRY,
+        DLS_SUCCEED,
+    }
     /// <summary>
     /// 通过http下载资源
     /// </summary>
@@ -29,7 +36,7 @@ namespace Smart.Common
         /// <param name="url">URL下载地址</param>
         /// <param name="savePath">Save path保存路径</param>
         /// <param name="callBack">Call back回调函数</param>
-        public void DownLoad(string url, string savePath, string fileName, Action callBack, System.Threading.ThreadPriority threadPriority = System.Threading.ThreadPriority.Normal)
+        public void DownLoad(string url, string savePath, string fileName, Action<DownLoadStatus> action, System.Threading.ThreadPriority threadPriority = System.Threading.ThreadPriority.Normal)
         {
             isStop = false;
             System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
@@ -57,7 +64,6 @@ namespace Smart.Common
                 //如果没下载完
                 if (fileLength < totalLength)
                 {
-
                     //断点续传核心，设置本地文件流的起始位置
                     fs.Seek(fileLength, SeekOrigin.Begin);
 
@@ -87,7 +93,6 @@ namespace Smart.Common
                         //UnityEngine.Debug.Log(progress);
                         //类似尾递归
                         length = stream.Read(buffer, 0, buffer.Length);
-
                     }
                     stream.Close();
                     stream.Dispose();
@@ -105,7 +110,7 @@ namespace Smart.Common
                 if (progress == 1)
                 {
                     isDone = true;
-                    if (callBack != null) callBack();
+                    if (action != null) action(DownLoadStatus.DLS_SUCCEED);
                     thread.Abort();
                 }
                 UnityEngine.Debug.Log("download finished");
