@@ -9,7 +9,9 @@ namespace Smart
     {
         protected override void OnInitialize()
         {
+            AssetBundleManager.Instance();
 
+            AssetBundleManager.Instance().DownLoadAssetBundles("https://resourcekids.66uu.cn/kids/", Application.version,"ad","blood_train");
         }
     }
 }

@@ -115,13 +115,15 @@ namespace Smart.Common
 
         public static string getAssetBundleDownloadUrl(string server,string version,string bundleName)
         {
-            var url = string.Format("{0}/AssetBundles/V{1}/{2}",server,version,bundleName);
+            server = server.TrimEnd('/');
+            var url = string.Format("{0}/AssetBundles/V{1}/{2}/{3}",server,version,getPlatformString(),bundleName);
             return url;
         }
 
-        public static string getAssetBundleManifestDownloadUrl(string server,string version,string bundleName)
+        public static string getAssetBundleManifestDownloadUrl(string server,string version)
         {
-            var url = string.Format("{0}/AssetBundles/V{1}/{2}.manifest",server,version,bundleName);
+            server = server.TrimEnd('/');
+            var url = string.Format("{0}/AssetBundles/V{1}/{2}/{2}.manifest", server,version, getPlatformString());
             return url;
         }
 

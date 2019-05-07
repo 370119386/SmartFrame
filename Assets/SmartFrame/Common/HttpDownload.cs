@@ -1,144 +1,200 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using System.IO;
 using System.Net;
 using System;
+using UnityEngine.Events;
 
 namespace Smart.Common
 {
-    public enum DownLoadStatus
+    public class HttpDownLoadHandle
     {
-        DLS_DOWNLOADING = 0,
-        DLS_FAILED,
-        DLS_RETRY,
-        DLS_SUCCEED,
-    }
-    /// <summary>
-    /// 通过http下载资源
-    /// </summary>
-    public class HttpDownLoad
-    {
-        //下载进度
         public float progress { get; private set; }
-        //涉及子线程要注意,Unity关闭的时候子线程不会关闭，所以要有一个标识
-        private bool isStop;
-        //子线程负责下载，否则会阻塞主线程，Unity界面会卡主
-        private Thread thread;
-        //表示下载是否完成
         public bool isDone { get; private set; }
-        const int ReadWriteTimeOut = 2 * 1000;//超时等待时间
-        const int TimeOutWait = 5 * 1000;//超时等待时间
 
-        /// <summary>
-        /// 下载方法(断点续传)
-        /// </summary>
-        /// <param name="url">URL下载地址</param>
-        /// <param name="savePath">Save path保存路径</param>
-        /// <param name="callBack">Call back回调函数</param>
-        public void DownLoad(string url, string savePath, string fileName, Action<DownLoadStatus> action, System.Threading.ThreadPriority threadPriority = System.Threading.ThreadPriority.Normal)
+        protected string url = string.Empty;
+        protected string storepath = string.Empty;
+        protected string fileName = string.Empty;
+        protected UnityAction onSucceed;
+        protected UnityAction<string> onFailed;
+
+        protected const int threadsCount = 2;
+        protected static Thread[] threads = new Thread[threadsCount];
+        protected static Dictionary<string,HttpDownLoadHandle> downloadList = new Dictionary<string, HttpDownLoadHandle>(32);
+        protected static List<HttpDownLoadHandle> unstartedList = new List<HttpDownLoadHandle>(32);
+        protected static object lock_obj = new object();
+        protected static List<UnityAction> downloadActions = new List<UnityAction>(32);
+        protected static List<UnityAction> actions = new List<UnityAction>(32);
+
+        protected const int ReadWriteTimeOut = 2 * 1000;//超时等待时间
+        protected const int TimeOutWait = 5 * 1000;//超时等待时间
+
+        protected static long HttpGetFileLength(string url)
         {
-            isStop = false;
-            System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
-            //开启子线程下载,使用匿名方法
-            thread = new Thread(delegate ()
-            {
-                stopWatch.Start();
-                //判断保存路径是否存在
-                if (!Directory.Exists(savePath))
-                {
-                    Directory.CreateDirectory(savePath);
-                }
-                //这是要下载的文件名，比如从服务器下载a.zip到D盘，保存的文件名是test
-                string filePath = savePath + "/" + fileName;
-
-                //使用流操作文件
-                FileStream fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write);
-                //获取文件现在的长度
-                long fileLength = fs.Length;
-                //获取下载文件的总长度
-                UnityEngine.Debug.Log(url + " " + fileName);
-                long totalLength = GetLength(url);
-                Debug.LogFormat("<color=red>文件:{0} 已下载{1}M，剩余{2}M</color>", fileName, fileLength / 1024 / 1024, (totalLength - fileLength) / 1024 / 1024);
-
-                //如果没下载完
-                if (fileLength < totalLength)
-                {
-                    //断点续传核心，设置本地文件流的起始位置
-                    fs.Seek(fileLength, SeekOrigin.Begin);
-
-                    HttpWebRequest request = HttpWebRequest.Create(url) as HttpWebRequest;
-
-                    request.ReadWriteTimeout = ReadWriteTimeOut;
-                    request.Timeout = TimeOutWait;
-
-                    //断点续传核心，设置远程访问文件流的起始位置
-                    request.AddRange((int)fileLength);
-
-                    Stream stream = request.GetResponse().GetResponseStream();
-                    byte[] buffer = new byte[1024];
-                    //使用流读取内容到buffer中
-                    //注意方法返回值代表读取的实际长度,并不是buffer有多大，stream就会读进去多少
-                    int length = stream.Read(buffer, 0, buffer.Length);
-                    //Debug.LogFormat("<color=red>length:{0}</color>" + length);
-                    while (length > 0)
-                    {
-                        //如果Unity客户端关闭，停止下载
-                        if (isStop) break;
-                        //将内容再写入本地文件中
-                        fs.Write(buffer, 0, length);
-                        //计算进度
-                        fileLength += length;
-                        progress = (float)fileLength / (float)totalLength;
-                        //UnityEngine.Debug.Log(progress);
-                        //类似尾递归
-                        length = stream.Read(buffer, 0, buffer.Length);
-                    }
-                    stream.Close();
-                    stream.Dispose();
-
-                }
-                else
-                {
-                    progress = 1;
-                }
-                stopWatch.Stop();
-                Debug.Log("耗时: " + stopWatch.ElapsedMilliseconds);
-                fs.Close();
-                fs.Dispose();
-                //如果下载完毕，执行回调
-                if (progress == 1)
-                {
-                    isDone = true;
-                    if (action != null) action(DownLoadStatus.DLS_SUCCEED);
-                    thread.Abort();
-                }
-                UnityEngine.Debug.Log("download finished");
-            });
-            //开启子线程
-            thread.IsBackground = true;
-            thread.Priority = threadPriority;
-            thread.Start();
-        }
-
-
-        /// <summary>
-        /// 获取下载文件的大小
-        /// </summary>
-        /// <returns>The length.</returns>
-        /// <param name="url">URL.</param>
-        long GetLength(string url)
-        {
-            UnityEngine.Debug.Log(url);
+            //UnityEngine.Debug.Log(url);
             HttpWebRequest requet = HttpWebRequest.Create(url) as HttpWebRequest;
             requet.Method = "HEAD";
             HttpWebResponse response = requet.GetResponse() as HttpWebResponse;
             return response.ContentLength;
         }
 
-        public void Close()
+        protected static void Run()
         {
-            isStop = true;
+            if(unstartedList.Count <= 0)
+            {
+                Thread.Sleep(150);
+            }
+            else
+            {
+                HttpDownLoadHandle handler = null;
+                lock (lock_obj)
+                {
+                    if(unstartedList.Count > 0)
+                    {
+                        handler = unstartedList[0];
+                        unstartedList.RemoveAt(0);
+                    }
+                }
+
+                if(null != handler)
+                {
+                    if (!Directory.Exists(handler.storepath))
+                    {
+                        Directory.CreateDirectory(handler.storepath);
+                    }
+
+                    var filePath = System.IO.Path.Combine(handler.storepath, handler.fileName);
+                    using (FileStream fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
+                    {
+                        long fileLength = fs.Length;
+                        long totalLength = 0L;// HttpGetFileLength(handler.url);
+
+                        if (true || fileLength < totalLength)
+                        {
+                            fs.Seek(fileLength, SeekOrigin.Begin);
+
+                            HttpWebRequest request = HttpWebRequest.Create(handler.url) as HttpWebRequest;
+                            //request.ReadWriteTimeout = ReadWriteTimeOut;
+                            //request.Timeout = TimeOutWait;
+                            if(fileLength > 0)
+                                request.AddRange((int)fileLength);
+
+                            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+                            try
+                            {
+                                using (Stream stream = request.GetResponse().GetResponseStream())
+                                {
+                                    byte[] buffer = new byte[1024];
+                                    int length = stream.Read(buffer, 0, buffer.Length);
+                                    while (length > 0)
+                                    {
+                                        //如果Unity客户端关闭，停止下载
+                                        //if (isStop) break;
+                                        //将内容再写入本地文件中
+                                        fs.Write(buffer, 0, length);
+                                        //计算进度
+                                        fileLength += length;
+                                        handler.progress = (float)fileLength / (float)totalLength;
+                                        //类似尾递归
+                                        length = stream.Read(buffer, 0, buffer.Length);
+                                    }
+                                    stream.Close();
+                                    lock (lock_obj)
+                                    {
+                                        downloadActions.Add(handler.onSucceed);
+                                        handler.onSucceed = null;
+                                    }
+                                }
+                            }
+                            catch (System.Exception e)
+                            {
+                                var errMsg = string.Format("download:[{0}] failed errMsg:[{1}]", handler.fileName, e.Message);
+                                var actionFailed = handler.onFailed;
+                                handler.onFailed = null;
+
+                                lock (lock_obj)
+                                {
+                                    downloadActions.Add(() =>
+                                    {
+                                        if (null != actionFailed)
+                                        {
+                                            actionFailed.Invoke(errMsg);
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static HttpDownLoadHandle Get(string url,string storepath,string fileName, UnityAction onSucceed,UnityAction onFailed)
+        {
+            var key = System.IO.Path.Combine(url, fileName);
+
+            if(null == threads[0])
+            {
+                for(int i = 0; i < threads.Length; ++i)
+                {
+                    threads[i] = new Thread(Run);
+                    var thread = threads[i];
+                    thread.IsBackground = true;
+                    thread.Priority = System.Threading.ThreadPriority.BelowNormal;
+                    threads[i].Start();
+                }
+            }
+
+            lock(lock_obj)
+            {
+                if (downloadList.ContainsKey(key))
+                {
+                    return downloadList[key];
+                }
+            }
+
+            HttpDownLoadHandle downLoadHandler = new HttpDownLoadHandle();
+            downLoadHandler.progress = 0.0f;
+            downLoadHandler.isDone = false;
+            downLoadHandler.url = url;
+            downLoadHandler.storepath = storepath;
+            downLoadHandler.onSucceed = onSucceed;
+            downLoadHandler.fileName = fileName;
+            downLoadHandler.onFailed = (string errMsg) =>
+            {
+                Debug.LogErrorFormat("download [{0}] failed ... reason:{1}", fileName, errMsg);
+                if(null != onFailed)
+                {
+                    onFailed.Invoke();
+                }
+            };
+
+            lock (lock_obj)
+            {
+                downloadList.Add(key, downLoadHandler);
+                unstartedList.Add(downLoadHandler);
+            }
+
+            return downLoadHandler;
+        }
+        public static void Update()
+        {
+            lock(lock_obj)
+            {
+                actions.AddRange(downloadActions);
+                downloadActions.Clear();
+            }
+
+            for(int i = 0; i < actions.Count; ++i)
+            {
+                if(null != actions[i])
+                {
+                    actions[i].Invoke();
+                }
+            }
+            actions.Clear();
         }
     }
 }
