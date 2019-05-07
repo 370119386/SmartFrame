@@ -36,8 +36,19 @@ namespace Smart
             return null;
         }
 
-        [SerializeField][Tooltip("游戏主要相机")]
-        protected Camera mainCamera;
+        [SerializeField]
+        [Tooltip("游戏主要相机")]
+        public Camera mainCamera;
+
+        [SerializeField]
+        protected GameConfig gameConfig;
+        public GameConfig GameConfig
+        {
+            get
+            {
+                return gameConfig;
+            }
+        }
 
         protected static GameManager ms_instance;
         public static GameManager Instance()

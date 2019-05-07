@@ -24,7 +24,9 @@ namespace Smart
 
             AssetBundleManager.Instance();
 
-            AssetBundleManager.Instance().DownLoadAssetBundles("https://resourcekids.66uu.cn/kids/", Application.version,"ad","blood_train");
+            string[] assetBundles = new string[] { "blood_train" };
+            string[] fileMd5s = new string[] { "0xdddddd" };
+            AssetBundleManager.Instance().DownLoadAssetBundles("https://resourcekids.66uu.cn/kids/", Application.version, assetBundles,fileMd5s);
         }
     }
 }
