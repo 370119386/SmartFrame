@@ -39,8 +39,17 @@ namespace Smart
         [SerializeField][Tooltip("游戏主要相机")]
         protected Camera mainCamera;
 
+        protected static GameManager ms_instance;
+        public static GameManager Instance()
+        {
+            return ms_instance;
+        }
+
         IEnumerator Start()
         {
+            ms_instance = this;
+            DontDestroyOnLoad(gameObject);
+
             InitModules();
 
             IModule baseModule = GetModule(EnumModuleType.EMT_BASE_MODULE);

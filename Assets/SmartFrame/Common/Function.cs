@@ -127,7 +127,7 @@ namespace Smart.Common
             return url;
         }
 
-    /*
+   
         static StringBuilder S_StringBuidler = new StringBuilder(256);
         public static string GetMD5HashFromFile(string fileName)
         {
@@ -155,10 +155,9 @@ namespace Smart.Common
             }
             catch (System.Exception ex)
             {
-                Debug.LogErrorFormat("GetMD5HashFromFile fail,error:" + ex.Message);
+                //Debug.LogErrorFormat("GetMD5HashFromFile fail,error:" + ex.Message);
                 return string.Empty;
             }
         }
-    */
     }
 }
