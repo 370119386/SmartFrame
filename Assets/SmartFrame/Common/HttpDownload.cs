@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System;
 using UnityEngine.Events;
+using System.Text;
 
 namespace Smart.Common
 {
@@ -33,13 +34,21 @@ namespace Smart.Common
 
         protected class LogData
         {
-            public string log;
+            protected string log;
+
+            public string LogContent
+            {
+                get
+                {
+                    return log;
+                }
+            }
 
             public static void LogFormat(string fmt,params object[] argv)
             {
                 var logData = new LogData();
                 var content = string.Format(fmt, argv);
-                logData.log = string.Format("<color=#ff00ff>[ERROR]</color>:<color=#00ffff>{0}</color>", content);
+                logData.log = string.Format("<color=#ff00ff>[HttpDownLoad]</color>:<color=#00ffff>{0}</color>", content);
                 lock(lock_obj)
                 {
                     logDatas.Add(logData);
@@ -50,7 +59,7 @@ namespace Smart.Common
             {
                 var logData = new LogData();
                 var content = string.Format(fmt, argv);
-                logData.log = string.Format("<color=#ff00ff>[ERROR]</color>:<color=#ff0000>{0}</color>", content);
+                logData.log = string.Format("<color=#ff00ff>[HttpDownLoad]</color>:<color=#ff0000>{0}</color>", content);
                 lock (lock_obj)
                 {
                     logDatas.Add(logData);
@@ -69,19 +78,46 @@ namespace Smart.Common
             return response.ContentLength;
         }
 
-        protected static bool VerifyFileMd5(string filePath, string checkMd5)
+        protected static string GetMD5HashFromFile(FileStream fileStream)
         {
-            var fileMd5 = Function.GetMD5HashFromFile(filePath);
+            StringBuilder stringBuilder = new StringBuilder(256);
+            if (null == fileStream)
+            {
+                return string.Empty;
+            }
+
+            fileStream.Seek(0, SeekOrigin.Begin);
+            byte[] retVal = new byte[0];
+            System.Security.Cryptography.MD5 md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
+            retVal = md5.ComputeHash(fileStream);
+
+            stringBuilder.Clear();
+            for (int i = 0; i < retVal.Length; i++)
+            {
+                stringBuilder.Append(retVal[i].ToString("x2"));
+            }
+            return stringBuilder.ToString();
+        }
+
+        protected static bool VerifyFileMd5(FileStream fileStream, string fileName, string checkMd5)
+        {
+            LogData.LogFormat("[文件校验]:[{0}]:开始校验", fileName);
+
+            var fileMd5 = GetMD5HashFromFile(fileStream);
+
             if(string.IsNullOrEmpty(fileMd5))
             {
+                LogData.LogErrorFormat("[文件校验]:[{0}]:获取文件MD5为空,校验失败", fileName);
                 return false;
             }
 
             if (!string.Equals(fileMd5, checkMd5))
             {
+                LogData.LogErrorFormat("[文件校验]:[{0}]:LOCALMD5:[{1}] != CHECKMD5:[{2}]校验失败", fileName, fileMd5, checkMd5);
                 return false;
             }
 
+            LogData.LogFormat("[文件校验]:[{0}]:LOCALMD5:[{1}] == CHECKMD5:[{2}]校验成功", fileName, fileMd5, checkMd5);
             return true;
         }
 
@@ -92,7 +128,7 @@ namespace Smart.Common
                 if (unstartedList.Count <= 0)
                 {
                     Thread.Sleep(150);
-                    return;
+                    continue;
                 }
 
                 HttpDownLoadHandle handler = null;
@@ -107,7 +143,7 @@ namespace Smart.Common
 
                 if(null == handler)
                 {
-                    return;
+                    continue;
                 }
 
                 if (!Directory.Exists(handler.storepath))
@@ -121,7 +157,7 @@ namespace Smart.Common
 
                 try
                 {
-                    using (FileStream fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
+                    using (FileStream fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
                     {
                         long fileLength = fs.Length;
                         long totalLength = HttpGetFileLength(handler.url);
@@ -131,12 +167,34 @@ namespace Smart.Common
                         if (fileLength == totalLength)
                         {
                             LogData.LogFormat("[文件下载]:[{0}]:文件长度相同", handler.fileName);
-                            if (!VerifyFileMd5(handler.fileName, handler.checkMd5))
+                            if (!VerifyFileMd5(fs, handler.fileName, handler.checkMd5))
                             {
                                 fs.SetLength(0);
                                 fileLength = fs.Length;
                                 needReCheck = false;
-                                LogData.LogFormat("[文件下载]:[{0}]:校验文件MD5码失败,需要重新下载", handler.fileName);
+                                handler.downloadCnt -= 1;
+                                LogData.LogFormat("[文件下载]:[{0}]:校验文件MD5码失败,需要重新下载,扔回队列等待重下", handler.fileName);
+
+                                if (handler.downloadCnt <= 0)
+                                {
+                                    LogData.LogErrorFormat("[文件下载]:[{0}]:重下次数已经用完", handler.fileName);
+                                    var actionFailed = handler.onFailed;
+                                    handler.onFailed = null;
+                                    lock (lock_obj)
+                                    {
+                                        downloadActions.Add(actionFailed);
+                                    }
+                                    continue;
+                                }
+
+                                fs.Flush();
+                                fs.Close();
+
+                                lock (lock_obj)
+                                {
+                                    unstartedList.Add(handler);
+                                }
+                                continue;
                             }
                             else
                             {
@@ -154,7 +212,7 @@ namespace Smart.Common
                                         }
                                     });
                                 }
-                                return;
+                                continue;
                             }
                         }
                         else if (fileLength > totalLength)
@@ -163,6 +221,13 @@ namespace Smart.Common
                             fs.SetLength(0);
                             fileLength = fs.Length;
                             needReCheck = false;
+                        }
+                        else
+                        {
+                            if (fileLength == 0)
+                                needReCheck = false;
+                            else
+                                needReCheck = true;
                         }
 
                         fs.Seek(fileLength, SeekOrigin.Begin);
@@ -194,47 +259,64 @@ namespace Smart.Common
                             }
 
                             stream.Close();
+                        }
 
-                            if (needReCheck)
-                            {
-                                LogData.LogFormat("[文件下载]:[{0}]:需要重新校验", handler.fileName);
-                                checkOk = VerifyFileMd5(handler.fileName, handler.checkMd5);
-                            }
-                            else
-                            {
-                                LogData.LogFormat("[文件下载]:[{0}]:不需要重新校验", handler.fileName);
-                                checkOk = true;
-                            }
+                        fs.Flush();
+                        fs.Close();
 
-                            if (checkOk)
+                        if (needReCheck)
+                        {
+                            LogData.LogFormat("[文件下载]:[{0}]:需要重新校验", handler.fileName);
+                            checkOk = VerifyFileMd5(fs, handler.fileName, handler.checkMd5);
+                        }
+                        else
+                        {
+                            LogData.LogFormat("[文件下载]:[{0}]:不需要重新校验", handler.fileName);
+                            checkOk = true;
+                        }
+
+                        if (checkOk)
+                        {
+                            LogData.LogFormat("[文件下载]:[{0}]:文件下载成功", handler.fileName);
+                            lock (lock_obj)
                             {
-                                LogData.LogFormat("[文件下载]:[{0}]:文件下载成功", handler.fileName);
+                                downloadActions.Add(handler.onSucceed);
+                                handler.onSucceed = null;
+                            }
+                        }
+                        else
+                        {
+                            LogData.LogFormat("[文件下载]:[{0}]:重新校验文件失败,扔回队列等待重下", handler.fileName);
+                            handler.downloadCnt -= 1;
+                            fs.SetLength(0);
+
+                            if (handler.downloadCnt <= 0)
+                            {
+                                LogData.LogErrorFormat("[文件下载]:[{0}]:重下次数已经用完", handler.fileName);
+                                var actionFailed = handler.onFailed;
+                                handler.onFailed = null;
                                 lock (lock_obj)
                                 {
-                                    downloadActions.Add(handler.onSucceed);
-                                    handler.onSucceed = null;
+                                    downloadActions.Add(actionFailed);
                                 }
+                                continue;
                             }
-                            else
+
+                            lock (lock_obj)
                             {
-                                LogData.LogFormat("[文件下载]:[{0}]:重新校验文件失败,扔回队列等待重下", handler.fileName);
-                                fs.SetLength(0);
-                                lock (lock_obj)
-                                {
-                                    unstartedList.Add(handler);
-                                }
+                                unstartedList.Add(handler);
                             }
                         }
                     }
                 }
                 catch (System.Exception e)
                 {
-                    LogData.LogErrorFormat("[文件下载]:[{0}]:下载失败:[{1}]", handler.fileName, e.Message);
+                    LogData.LogErrorFormat("[文件下载]:[{0}]:下载异常:[{1}]", handler.fileName, e.Message);
                     handler.downloadCnt -= 1;
 
                     if(handler.downloadCnt <= 0)
                     {
-                        LogData.LogErrorFormat("[文件下载]:[{0}]:重下次数已经用完", handler.fileName);
+                        LogData.LogErrorFormat("[文件下载]:[{0}]:下载异常:重下次数已经用完", handler.fileName);
                         var actionFailed = handler.onFailed;
                         handler.onFailed = null;
                         lock (lock_obj)
@@ -244,7 +326,7 @@ namespace Smart.Common
                     }
                     else
                     {
-                        LogData.LogErrorFormat("[文件下载]:[{0}]:扔回队列等待重下", handler.fileName);
+                        LogData.LogErrorFormat("[文件下载]:[{0}]:下载异常:扔回队列等待重下", handler.fileName);
                         lock (lock_obj)
                         {
                             unstartedList.Add(handler);
@@ -313,6 +395,45 @@ namespace Smart.Common
                 }
             }
             actions.Clear();
+
+            LogData[] datas = null;
+            lock (lock_obj)
+            {
+                if (logDatas.Count > 0)
+                {
+                    datas = new LogData[logDatas.Count];
+                    for(int i = 0; i < logDatas.Count; ++i)
+                    {
+                        datas[i] = logDatas[i];
+                    }
+                    logDatas.Clear();
+                }
+            }
+            if(null != datas)
+            {
+                for(int i = 0; i < datas.Length; ++i)
+                {
+                    Debug.Log(datas[i].LogContent);
+                }
+            }
+        }
+
+        public static void Abort()
+        {
+            for(int i = 0; i < threads.Length; ++i)
+            {
+                if(null != threads[i])
+                {
+                    threads[i].Abort();
+                    threads[i] = null;
+                }
+            }
+
+            downloadActions.Clear();
+            downloadList.Clear();
+            unstartedList.Clear();
+            actions.Clear();
+            logDatas.Clear();
         }
     }
 }

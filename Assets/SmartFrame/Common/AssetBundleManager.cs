@@ -27,7 +27,7 @@ namespace Smart.Common
             DontDestroyOnLoad(gameObject);
         }
 
-        public void DownLoadAssetBundles(string server,string version,params string[] assetBundles)
+        public void DownLoadAssetBundles(string server,string version,string[] assetBundles,string[] chekfileMd5s)
         {
             for(int i = 0 ; i < assetBundles.Length ; ++i)
             {
@@ -43,8 +43,7 @@ namespace Smart.Common
                 var storepath = Function.getAssetBundlePersistentPath(version, string.Empty, false);
                 Debug.LogFormat("[download]:storepath:[<color=#00ffff>{0}</color>]", storepath);
 
-                //StartCoroutine(download(url));
-                var handler = HttpDownLoadHandle.Get(url, storepath, assetBundles[i], () =>
+                var handler = HttpDownLoadHandle.Get(url, storepath, assetBundles[i], chekfileMd5s[i],() =>
                    {
                        Debug.LogFormat("[download]:bundleName:[<color=#00ffff>{0}</color>] succeed", bundleName);
                    },
@@ -90,6 +89,11 @@ namespace Smart.Common
         protected void Update()
         {
             HttpDownLoadHandle.Update();
+        }
+
+        protected void OnDestroy()
+        {
+            HttpDownLoadHandle.Abort();
         }
     }
 }
