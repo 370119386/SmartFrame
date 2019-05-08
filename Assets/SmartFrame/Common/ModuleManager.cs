@@ -1,133 +1,62 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Smart.Common;
 
-namespace Smart.Common
+namespace Smart.Module
 {
-    public interface ILogger
+    public enum EnumModuleType
     {
-        void SetModuleName(string name);
-        void LogFormat(string fmt, params object[] argv);
+        EMT_BASE_MODULE = 0,
     }
 
-    public interface IModule
+    public class ModuleManager : MonoBehaviour
     {
-        void Initialize(object argv);
-        IEnumerator Startup();
-        void Finalized();
-        string Name();
-        ILogger Logger { get; }
-    }
-
-    public class ModuleData
-    {
-        public string moduleName;
-        public object argv;
-    }
-
-    public class LoggerManager : ILogger
-    {
-        protected string moduleName;
-        public void SetModuleName(string name)
+        protected static ModuleManager ms_instance;
+        public static ModuleManager Instance()
         {
-            moduleName = name;
+            if (null == ms_instance)
+            {
+                var gameObject = new GameObject("ModuleManager");
+                ms_instance = gameObject.AddComponent<ModuleManager>();
+            }
+            return ms_instance;
         }
 
-        public void LogFormat(string fmt, params object[] argv)
+        protected void Start()
         {
-            try
-            {
-                var log = string.Format("[<color=#ff00ff>{0}</color>]:[<color=#00ffff>{1}</color>]", moduleName, string.Format(fmt, argv));
-                Debug.LogFormat(log);
-            }
-            catch(System.Exception e)
-            {
-                Debug.LogFormat("[<color=#ff00ff>{0}</color>]:<color=#ff0000>[Log Exception]:{1}</color>",moduleName,e.Message);
-            }
+            DontDestroyOnLoad(gameObject);
         }
-    }
 
-    public class ModuleTemplate<T> : /*Singleton<T>,*/IModule where T : ModuleTemplate<T>,new()
-    {
-        protected ModuleData userData;
-        protected ILogger logger;
-        protected List<IEnumerator> enumerators = new List<IEnumerator>();
-
-        public ILogger Logger
+        public void AwakeModules()
         {
-            get
+            var iter = mGameModules.GetEnumerator();
+            while(iter.MoveNext())
             {
-                return logger;
+                iter.Current.Value.Awake();
             }
         }
 
-        public void Initialize(object argv)
+        protected Dictionary<EnumModuleType, IModule> mGameModules = new Dictionary<EnumModuleType, IModule>(32);
+        protected void RegisterModule(EnumModuleType eModule, IModule module)
         {
-            logger = new LoggerManager();
-            logger.SetModuleName(typeof(T).Name);
-
-            logger.LogFormat("Enter Initialize");
-            userData = new ModuleData
+            if (!mGameModules.ContainsKey(eModule))
             {
-                argv = argv,
-                moduleName = typeof(T).Name,
-            };
-
-            OnInitialize();
-            logger.LogFormat("Exit Initialize");
-        }
-
-        public void Finalized()
-        {
-            logger.LogFormat("Enter Finalize");
-            OnFinalized();
-            logger.LogFormat("Exit Finalize");
-        }
-
-        public IEnumerator Startup()
-        {
-            logger.LogFormat("Enter Startup");
-
-            logger.LogFormat("BeginLoading");
-            BeginLoading();
-
-            for(int i = 0; i < enumerators.Count; ++i)
-            {
-                logger.LogFormat("enumerator_task_{0}",i + 1);
-                yield return enumerators[0];
+                mGameModules.Add(eModule, module);
             }
-
-            logger.LogFormat("EndLoading");
-            EndLoading();
-
-            logger.LogFormat("Exit Startup");
+        }
+        public IModule GetModule(EnumModuleType eModule)
+        {
+            if (mGameModules.ContainsKey(eModule))
+            {
+                return mGameModules[eModule];
+            }
+            return null;
         }
 
-        public string Name()
+        public void RegisterModules()
         {
-            if(null != userData)
-                return userData.moduleName;
-            return @"[ModuleEmptyed]";
-        }
-
-        protected virtual void OnInitialize()
-        {
-
-        }
-
-        protected virtual void OnFinalized()
-        {
-
-        }
-
-        protected virtual void BeginLoading()
-        {
-
-        }
-
-        protected virtual void EndLoading()
-        {
-
+            RegisterModule(EnumModuleType.EMT_BASE_MODULE, new BaseModule());
         }
     }
 }

@@ -199,7 +199,6 @@ namespace Smart.Common
                             else
                             {
                                 LogData.LogFormat("[文件下载]:[{0}]:校验文件MD5码成功，不需要重新下载", handler.fileName);
-                                string fileName = handler.fileName;
                                 var actionSucceed = handler.onSucceed;
                                 needReCheck = false;
                                 lock (lock_obj)
@@ -239,7 +238,6 @@ namespace Smart.Common
                         if (fileLength > 0)
                             request.AddRange((int)fileLength);
 
-                        HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                         bool checkOk = false;
                         using (Stream stream = request.GetResponse().GetResponseStream())
                         {

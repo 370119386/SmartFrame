@@ -155,7 +155,7 @@ namespace Smart.Common
             }
             catch (System.Exception ex)
             {
-                //Debug.LogErrorFormat("GetMD5HashFromFile fail,error:" + ex.Message);
+                Debug.LogErrorFormat("GetMD5HashFromFile fail,error:" + ex.Message);
                 return string.Empty;
             }
         }

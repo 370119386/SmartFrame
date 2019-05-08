@@ -2,40 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Smart.Common;
+using Smart.Module;
 
 namespace Smart
 {
-    public enum EnumModuleType
-    {
-        EMT_BASE_MODULE = 0,
-    }
-
     public class GameManager : MonoBehaviour
     {
-        protected Dictionary<EnumModuleType, IModule> mGameModules = new Dictionary<EnumModuleType, IModule>(32);
-
-        protected void RegisterModule(EnumModuleType eModule,IModule module)
-        {
-            if(!mGameModules.ContainsKey(eModule))
-            {
-                mGameModules.Add(eModule, module);
-            }
-        }
-
-        protected void InitModules()
-        {
-            RegisterModule(EnumModuleType.EMT_BASE_MODULE, new BaseModule());
-        }
-
-        public IModule GetModule(EnumModuleType eModule)
-        {
-            if(mGameModules.ContainsKey(eModule))
-            {
-                return mGameModules[eModule];
-            }
-            return null;
-        }
-
         [SerializeField]
         [Tooltip("游戏主要相机")]
         public Camera mainCamera;
@@ -56,17 +28,27 @@ namespace Smart
             return ms_instance;
         }
 
+        protected void Awake()
+        {
+            ModuleManager.Instance().RegisterModules();
+            ModuleManager.Instance().AwakeModules();
+        }
+
         IEnumerator Start()
         {
             ms_instance = this;
             DontDestroyOnLoad(gameObject);
 
-            InitModules();
+            var baseModule = ModuleManager.Instance().GetModule(EnumModuleType.EMT_BASE_MODULE);
+            baseModule.Create(this);
 
-            IModule baseModule = GetModule(EnumModuleType.EMT_BASE_MODULE);
-            baseModule.Initialize(this);
+            yield return baseModule.AnsyEnter();
+        }
 
-            yield return baseModule.Startup();
+        protected void OnDestroy()
+        {
+            var baseModule = ModuleManager.Instance().GetModule(EnumModuleType.EMT_BASE_MODULE);
+            baseModule.Exit();
         }
     }
 }

@@ -5,7 +5,7 @@ using Smart.Common;
 
 namespace Smart
 {
-    public class BaseModule : ModuleTemplate<BaseModule>
+    public class BaseModule : Module<BaseModule>
     {
         protected void InitCertificateValidation()
         {
@@ -18,12 +18,24 @@ namespace Smart
                 };
         }
 
-        protected override void OnInitialize()
+        public override void Awake()
         {
-            InitCertificateValidation();
+            base.Awake();
+
+            RegisterFunction(INVOKE_ON_CREATE, OnCreate);
+            RegisterFunction(INVOKE_ON_ENTER, OnEnter);
 
             AssetBundleManager.Instance();
+            InitCertificateValidation();
+        }
 
+        protected void OnEnter()
+        {
+
+        }
+
+        protected void OnCreate()
+        {
             string[] assetBundles = new string[] { "blood_train" };
             string[] fileMd5s = new string[] { "0xdddddd" };
             AssetBundleManager.Instance().DownLoadAssetBundles(GameManager.Instance().GameConfig.gameResourcesServer, Application.version, assetBundles,fileMd5s);
