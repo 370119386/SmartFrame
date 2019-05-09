@@ -1,0 +1,191 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37b9a69a7e0354066b878cb615b09e54, type: 3}
+  m_Name: GamePurchaseTable
+  m_EditorClassIdentifier: 
+  datas:
+  - ID: 21
+    Name: "\u52A8\u7269\u6307\u5357\u9488"
+    SortID: 7
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: animal_compass
+    Detail: "\u89C2\u5BDF\u751F\u6D3B\u4E2D\u7684\u5C0F\u52A8\u7269\uFF0C \u4F60\u4F1A\n\u53D1\u73B0\u5B83\u4EEC\u90FD\u6709\u81EA\u5DF1\u7684\u6307\u5357\u9488\u54E6"
+    Desc: Consts.UGame.Compass
+    StoreKey: key_animal_compass_purchased
+    Price: 18
+  - ID: 17
+    Name: "\u9ED1\u767D\u6591\u9A6C"
+    SortID: 8
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: zebraicon
+    Detail: "\u4F60\u77E5\u9053\u6591\u9A6C\u662F\u9ED1\u6591\u767D\u9A6C\u8FD8\u662F\u767D\n\u6591\u9ED1\u9A6C\u5417\uFF1F"
+    Desc: Consts.UGame.ZebrasBlackAndWhiteStripes
+    StoreKey: key_zebras_game_purchased
+    Price: 18
+  - ID: 23
+    Name: "\u53F0\u98CE\u5C3C\u4F2F\u7279"
+    SortID: 9
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: typhoon
+    Detail: "\u53F0\u98CE\u5C3C\u4F2F\u7279\u6765\u4E86\uFF0C\u770B\u770B\u5B83\u6709\u591A\n\u5389\u5BB3\u5427"
+    Desc: Consts.UGame.Typhoon
+    StoreKey: key_typhoon_game_purchased
+    Price: 18
+  - ID: 24
+    Name: "\u9020\u7EB8\u672F"
+    SortID: 10
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: paper_making
+    Detail: "\u5C0F\u670B\u53CB\uFF0C\u4F60\u77E5\u9053\u7EB8\u662F\u600E\u4E48\u505A\u51FA\n\u6765\u7684\u5417\uFF1F"
+    Desc: Consts.UGame.Papermaking
+    StoreKey: key_papkermaking_game_purchased
+    Price: 18
+  - ID: 25
+    Name: "\u96D5\u7248\u5370\u5237"
+    SortID: 6
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: typography_icon
+    Detail: "\u5C0F\u670B\u53CB\uFF0C\u4F60\u77E5\u9053\u5370\u5237\u672F\u662F\u600E\u4E48\n\u53D1\u660E\u7684\u5417\uFF1F"
+    Desc: Consts.UGame.Typography
+    StoreKey: key_typography_game_purchased
+    Price: 18
+  - ID: 26
+    Name: "\u5929\u8D4B\u4E03\u5DE7\u677F"
+    SortID: 4
+    IsMain: 1
+    NeedPurchaseToUnlock: 0
+    Attached: 2b000000
+    Icon: tangram_icon
+    Detail: "\u4E03\u5757\u795E\u5947\u7684\u6728\u677F\uFF0C\u80FD\u62FC\u51FA\u591A\u5C11\n\u79CD\u795E\u5947\u7684\u7269\u4F53\u5462\uFF1F"
+    Desc: Consts.UGame.Tangram
+    StoreKey: key_tangram2_game_purchased
+    Price: 64
+  - ID: 43
+    Name: "\u5929\u8D4B\u4E03\u5DE7\u677F-2"
+    SortID: 5
+    IsMain: 0
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: tangram_icon
+    Detail: "\u4E03\u5757\u795E\u5947\u7684\u6728\u677F\uFF0C\u80FD\u62FC\u51FA\u591A\u5C11\n\u79CD\u795E\u5947\u7684\u7269\u4F53\u5462\uFF1F"
+    Desc: Consts.UGame.Tangram2
+    StoreKey: key_tangram2_game_purchased
+    Price: 64
+  - ID: 34
+    Name: "\u9762\u5305\u65C5\u884C\u8BB0"
+    SortID: 12
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: bread_travel
+    Detail: "\u795E\u5947\u7684\u6D88\u5316\u8FC7\u7A0B\uFF0C\u4FBF\u4FBF\u539F\u6765\u662F\n\u8FD9\u6837\u5F62\u6210\u7684\u3002"
+    Desc: Consts.UGame.BreadTravel
+    StoreKey: key_breadtravel_game_purchased
+    Price: 18
+  - ID: 35
+    Name: "\u8840\u6DB2\u8FD0\u884C\u8BB0"
+    SortID: 14
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: blood_travel
+    Detail: "\u5C0F\u670B\u53CB\uFF0C \u4F60\u77E5\u9053\u8840\u6DB2\u5728\u4EBA\u4F53\u4E2D\n\u662F\u5982\u4F55\u8FD0\u884C\u7684\u5417\uFF1F"
+    Desc: Consts.UGame.BloodTrain
+    StoreKey: key_bloodtrain_game_purchased
+    Price: 18
+  - ID: 36
+    Name: "\u6C27\u6C14\u5947\u9047\u8BB0"
+    SortID: 13
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: oxygen
+    Detail: "\u547C\u5438\u7684\u8FC7\u7A0B\u7ADF\u7136\u662F\u8FD9\u6837\u7684\u3002"
+    Desc: Consts.UGame.OxygenSpirit
+    StoreKey: key_oxygenspirit_game_purchased
+    Price: 18
+  - ID: 37
+    Name: "\u7EC6\u80DE\u6218\u6597\u8BB0"
+    SortID: 11
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: icspirit
+    Detail: "\u514D\u75AB\u7EC6\u80DE\u662F\u5982\u4F55\u4E0E\u75C5\u6BD2\u4F5C\u6218\uFF0C\u4FDD\n\u62A4\u4EBA\u4F53\u7684\u3002"
+    Desc: Consts.UGame.ImmuneCells
+    StoreKey: key_immunecells_game_purchased
+    Price: 18
+  - ID: 38
+    Name: "\u5927\u8111\u63A2\u9669\u8BB0"
+    SortID: 15
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: nervous_system
+    Detail: "\u63A2\u7D22\u5927\u8111\u548C\u795E\u7ECF\u7CFB\u7EDF\u7684\u5965\u79D8\u3002"
+    Desc: Consts.UGame.NervousSystem
+    StoreKey: key_nervoussystem_game_purchased
+    Price: 18
+  - ID: 42
+    Name: "\u7F16\u7A0B\u6E38\u620F"
+    SortID: 1
+    IsMain: 1
+    NeedPurchaseToUnlock: 0
+    Attached: 2c000000
+    Icon: bianchengketang
+    Detail: "\u7F16\u7A0B\u8BFE\u5802!\u8D85\u591A\u5173\u5361\uFF0C\u5B69\u5B50\u8111\u529B\n\u5F00\u53D1\u7684\u597D\u5E2E\u624B!"
+    Desc: Consts.UGame.CodingGame
+    StoreKey: key_coding_game_purchased
+    Price: 120
+  - ID: 44
+    Name: "\u7F16\u7A0B\u6E38\u620F-2"
+    SortID: 1
+    IsMain: 0
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: bianchengketang
+    Detail: "\u7F16\u7A0B\u8BFE\u5802!\u8D85\u591A\u5173\u5361\uFF0C\u5B69\u5B50\n\u8111\u529B\u5F00\u53D1\u7684\u597D\u5E2E\u624B!"
+    Desc: Consts.UGame.CodingGame
+    StoreKey: key_coding_game_purchased
+    Price: 120
+  - ID: 39
+    Name: "\u6050\u9F99\u6E38\u620F\u4E4B\u4F8F\u7F57\u7EAA"
+    SortID: 2
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: DinoIcon_256
+    Detail: "\u6881\u9F99\uFF0C\u8155\u9F99\uFF0C\u9A6C\u95E8\u6EAA\u9F99\u2026\n\u5FEB\u6765\u53D1\u73B0\u4F8F\u7F57\u7EAA\u66F4\u591A\u7684\u6050\u9F99!"
+    Desc: Consts.UGame.Dinosaur_ZLJ
+    StoreKey: key_dinosaur_zlj_game_purchased
+    Price: 90
+  - ID: 40
+    Name: "\u6050\u9F99\u6E38\u620F\u4E4B\u767D\u57A9\u7EAA"
+    SortID: 3
+    IsMain: 1
+    NeedPurchaseToUnlock: 1
+    Attached: 00000000
+    Icon: DinoIcon_256
+    Detail: "\u9738\u738B\u9F99\uFF0C\u4E09\u89D2\u9F99\uFF0C\u7532\u9F99...\n\u5FEB\u6765\u53D1\u73B0\u767D\u57A9\u7EAA\u66F4\u591A\u7684\u6050\u9F99!"
+    Desc: Consts.UGame.Dinosaur_BEJ
+    StoreKey: key_dinosaur_bej_game_purchased
+    Price: 90
