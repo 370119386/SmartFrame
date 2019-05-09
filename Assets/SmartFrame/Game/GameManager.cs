@@ -34,7 +34,7 @@ namespace Smart
             ModuleManager.Instance().AwakeModules();
         }
 
-        IEnumerator Start()
+        void Start()
         {
             ms_instance = this;
             DontDestroyOnLoad(gameObject);
@@ -42,7 +42,7 @@ namespace Smart
             var baseModule = ModuleManager.Instance().GetModule(EnumModuleType.EMT_BASE_MODULE);
             baseModule.Create(this);
 
-            yield return baseModule.AnsyEnter();
+            GameLoading.Loading(baseModule.AnsyEnter(),()=>{return true;},null,null);
         }
 
         protected void OnDestroy()

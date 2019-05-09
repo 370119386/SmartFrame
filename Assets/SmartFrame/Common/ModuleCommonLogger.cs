@@ -6,6 +6,16 @@ namespace Smart.Common
 {
     public class ModuleCommonLogger : ILogger
     {
+        public ModuleCommonLogger()
+        {
+            moduleName = string.Empty;
+        }
+        
+        public ModuleCommonLogger(string moduleName)
+        {
+            this.moduleName = moduleName;
+        }
+
         protected string moduleName;
 
         public void SetModuleName(string name)
