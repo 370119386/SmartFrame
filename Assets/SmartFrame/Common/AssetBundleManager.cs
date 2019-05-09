@@ -141,54 +141,56 @@ namespace Smart.Common
                     UnityAction onFailed = null,
                     AssetBundleAnsyLoadListener actionListener = null)
         {
-            UnityWebRequest www = UnityWebRequest.Get(url);
-            var downloadHandler = new DownloadHandlerAssetBundle(url,0);
-            www.downloadHandler = downloadHandler;
-            
-            var webRequest = www.SendWebRequest();
-            if(null != actionListener)
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                actionListener.items.Add(webRequest);
-            }
+                var downloadHandler = new DownloadHandlerAssetBundle(url, 0);
+                www.downloadHandler = downloadHandler;
 
-            yield return webRequest;
-
-            var bundleName = System.IO.Path.GetFileNameWithoutExtension(url);
-
-            if(!www.isDone)
-            {
-                Debug.LogFormat("download:[<color=#00ffff>{0}</color>] failed ...", bundleName);
-                if(null != onFailed)
+                var webRequest = www.SendWebRequest();
+                if (null != actionListener)
                 {
-                    onFailed.Invoke();
+                    actionListener.items.Add(webRequest);
                 }
-                yield break;
-            }
 
-            if(!string.IsNullOrEmpty(www.error))
-            {
-                Debug.LogFormat("download:[<color=#00ffff>{0}</color>]:failed:[{1}]", bundleName, www.error);
-                if(null != onFailed)
+                yield return webRequest;
+
+                var bundleName = System.IO.Path.GetFileNameWithoutExtension(url);
+
+                if (!www.isDone)
                 {
-                    onFailed.Invoke();
+                    Debug.LogFormat("download:[<color=#00ffff>{0}</color>] failed ...", bundleName);
+                    if (null != onFailed)
+                    {
+                        onFailed.Invoke();
+                    }
+                    yield break;
                 }
-                yield break;
-            }
 
-            if (null == downloadHandler.assetBundle)
-            {
-                Debug.LogFormat("download:[<color=#00ffff>{0}</color>] failed assetbundle is null", bundleName);
-                if(null != onFailed)
+                if (!string.IsNullOrEmpty(www.error))
                 {
-                    onFailed.Invoke();
+                    Debug.LogFormat("download:[<color=#00ffff>{0}</color>]:failed:[{1}]", bundleName, www.error);
+                    if (null != onFailed)
+                    {
+                        onFailed.Invoke();
+                    }
+                    yield break;
                 }
-                yield break;
-            }
 
-            Debug.LogFormat("download:[<color=#00ffff>{0}</color>] succeed", bundleName);
-            if(null != onSucceed)
-            {
-                onSucceed.Invoke(bundleName,downloadHandler.assetBundle);
+                if (null == downloadHandler.assetBundle)
+                {
+                    Debug.LogFormat("download:[<color=#00ffff>{0}</color>] failed assetbundle is null", bundleName);
+                    if (null != onFailed)
+                    {
+                        onFailed.Invoke();
+                    }
+                    yield break;
+                }
+
+                Debug.LogFormat("download:[<color=#00ffff>{0}</color>] succeed", bundleName);
+                if (null != onSucceed)
+                {
+                    onSucceed.Invoke(bundleName, downloadHandler.assetBundle);
+                }
             }
         }
 
@@ -233,13 +235,66 @@ namespace Smart.Common
             StartCoroutine(LoadAssetBundles(path,bundleNames,OnAssetBundleLoaded,onSucceed,onFailed,actionListener));
         }
 
-        public IEnumerator LoadAssetBundlesIter(string path,string[] bundleNames,
+        public IEnumerator LoadAssetBundlesEnumerator(string path,string[] bundleNames,
                     UnityAction onSucceed = null,
                     UnityAction onFailed = null,
                     UnityAction<float> actionListener = null)
         {
             var dependes = GetAllDependencyes(bundleNames);
             yield return LoadAssetBundles(path,dependes,OnAssetBundleLoaded,onSucceed,onFailed,actionListener);
+        }
+
+        public IEnumerator LoadAssetBundleManifest(string server,string version,UnityAction onSucceed,UnityAction onFailed)
+        {
+            var url = Function.getAssetBundleDownloadUrl(server, version, Function.getPlatformString());
+            Logger.LogFormat("LoadAssetBundleManifest:url:[{0}]", url);
+            yield return LoadAssetBundle(url, (string bundleName, AssetBundle assetBundle) =>
+             {
+                 manifest = assetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+                 if(null == manifest)
+                 {
+                     Logger.LogFormat("LoadAssetBundleManifest:Failed ...");
+                     if (null != onFailed)
+                     {
+                         onFailed.Invoke();
+                     }
+                     return;
+                 }
+                 Logger.LogFormat("LoadAssetBundleManifest:Succeed ...");
+                 if (null != onSucceed)
+                 {
+                     onSucceed.Invoke();
+                 }
+             },onFailed,null);
+        }
+
+        public string getAssetBundleStreamingAssetPath(string bundleName)
+        {
+            return string.Format("AssetBundles/{0}/{1}", Function.getPlatformString(),bundleName);
+        }
+
+        public IEnumerator LoadAssetBundleManifest(UnityAction onSucceed, UnityAction onFailed)
+        {
+            var url = getAssetBundleStreamingAssetPath(Function.getPlatformString());
+            Logger.LogFormat("LoadAssetBundleManifest:url:[{0}]", url);
+            yield return LoadAssetBundle(url, (string bundleName, AssetBundle assetBundle) =>
+            {
+                manifest = assetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+                if (null == manifest)
+                {
+                    Logger.LogFormat("LoadAssetBundleManifest:Failed ...");
+                    if (null != onFailed)
+                    {
+                        onFailed.Invoke();
+                    }
+                    return;
+                }
+                Logger.LogFormat("LoadAssetBundleManifest:Succeed ...");
+                if (null != onSucceed)
+                {
+                    onSucceed.Invoke();
+                }
+            }, onFailed, null);
         }
 
         Dictionary<string,AssetBundle> mAssetBundleMap = new Dictionary<string, AssetBundle>();
@@ -277,6 +332,21 @@ namespace Smart.Common
                     }
                 }
             }
+        }
+
+        public GameObject LoadGameObjectFromResourceFolder(string prefabPath,GameObject parent = null, bool worldPosStay = false)
+        {
+            var instance = Resources.Load<GameObject>(prefabPath);
+            if (null == instance)
+            {
+                Logger.LogFormat("Load GameObject From [{0}] Failed", prefabPath);
+                return null;
+            }
+
+            var objectHandle = Object.Instantiate(instance, parent.transform, worldPosStay);
+            Logger.LogFormat("Load GameObject From [{0}] Succeed ...", prefabPath);
+
+            return objectHandle;
         }
 
         public GameObject LoadGameObject(string bundleName,string prefabName,GameObject parent = null,bool worldPosStay = false)

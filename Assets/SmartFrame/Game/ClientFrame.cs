@@ -2,17 +2,27 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Smart.Common;
+using Smart.Table;
 
-namespace Smart.Client
+namespace Smart.UI
 {
     public class ClientFrame : IFrame
     {
+        protected enum LoadType
+        {
+            LT_FROM_ASSET_BUNDLE = 0,
+            LT_FROM_RESOURCES_FOLDER,
+            LT_FROM_TABLE,
+        }
+
+        protected LoadType eLoadType = LoadType.LT_FROM_ASSET_BUNDLE;
         protected bool isopen = false;
         protected object userData;
         private int _frameId = -1;
         protected GameObject instance = null;
         protected ClientFrame parentFrame = null;
         protected List<ClientFrame> childFrames = null;
+        protected FrameConfigTableItem frameConfig = null;
 
         protected static Smart.Common.ILogger Logger = new ModuleCommonLogger("ClientFrame");
 
@@ -41,25 +51,70 @@ namespace Smart.Client
             childFrames.Add(frame);
         }
 
+        protected GameObject LoadPrefab(GameObject root,bool worldPosStay)
+        {
+            if (eLoadType == LoadType.LT_FROM_TABLE)
+            {
+                frameConfig = UIManager.Instance().GetFrameConfig(frameId);
+                if (null == frameConfig)
+                {
+                    Logger.LogFormat("FrameConfig Is Null FrameId = [{0}]", frameId);
+                    return null;
+                }
+
+                eLoadType = (LoadType)frameConfig.LoadType;
+                if(eLoadType == LoadType.LT_FROM_ASSET_BUNDLE && null != frameConfig.InitParams && frameConfig.InitParams.Length == 2)
+                {
+                    _bundleName = frameConfig.InitParams[0];
+                    _prefabName = frameConfig.InitParams[1];
+                }
+                else if (eLoadType == LoadType.LT_FROM_RESOURCES_FOLDER && null != frameConfig.InitParams && frameConfig.InitParams.Length == 1)
+                {
+                    _prefabName = frameConfig.InitParams[0];
+                }
+                else
+                {
+                    Logger.LogFormat("FrameConfig Error frameConfig.LoadType = [{0}]", frameConfig.LoadType);
+                    return null;
+                }
+            }
+
+            if (eLoadType == LoadType.LT_FROM_ASSET_BUNDLE)
+            {
+                if (string.IsNullOrEmpty(bundleName))
+                {
+                    Logger.LogFormat("bundleName Has Not Setted Yet ...");
+                    return null;
+                }
+
+                if (string.IsNullOrEmpty(prefabName))
+                {
+                    Logger.LogFormat("prefabName Has Not Setted Yet ...");
+                    return null;
+                }
+
+                return AssetBundleManager.Instance().LoadGameObject(bundleName, prefabName, root, worldPosStay);
+            }
+
+            if(eLoadType == LoadType.LT_FROM_RESOURCES_FOLDER)
+            {
+                return AssetBundleManager.Instance().LoadGameObjectFromResourceFolder(prefabName, root, worldPosStay);
+            }
+
+            Logger.LogFormat("Frame eLoadType Error = {0}",(int)eLoadType);
+            return null;
+        }
+
         public void Open(int frameId,GameObject root,object argv)
         {
             _frameId = frameId;
             userData = argv;
             isopen = true;
-
-            if(string.IsNullOrEmpty(bundleName))
+            instance = LoadPrefab(root, false);
+            if(null == instance)
             {
-                Logger.LogFormat("bundleName Has Not Setted Yet ...");
                 return;
             }
-
-            if(string.IsNullOrEmpty(prefabName))
-            {
-                Logger.LogFormat("prefabName Has Not Setted Yet ...");
-                return;
-            }
-
-            AssetBundleManager.Instance().LoadGameObject(bundleName,prefabName);
 
             OnOpenFrame();
         }
@@ -101,14 +156,16 @@ namespace Smart.Client
             Logger.LogFormat("[{0}] HasBeenClosed ID = {1}",GetType().Name,frameId);
         }
 
-        protected virtual string bundleName
+        protected string _bundleName = string.Empty;
+        protected string bundleName
         {
-            get { return string.Empty; }
+            get { return _bundleName; }
         }
 
+        protected string _prefabName = string.Empty;
         protected virtual string prefabName
         {
-            get { return string.Empty; }
+            get { return _prefabName; }
         }
 
         protected virtual void OnOpenFrame()
