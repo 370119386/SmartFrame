@@ -13,6 +13,11 @@ namespace Smart
         public Camera mainCamera;
 
         [SerializeField]
+        [Tooltip("游戏层级")]
+        public GameObject[] Layers = new GameObject[0];
+
+
+        [SerializeField]
         protected GameConfig gameConfig;
         public GameConfig GameConfig
         {

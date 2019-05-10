@@ -113,6 +113,7 @@ namespace Smart.UI
             instance = LoadPrefab(root, false);
             if(null == instance)
             {
+                Logger.LogFormat("Open Frame Failed type = [{0}] frameId = [{1}]", GetType().Name,_frameId);
                 return;
             }
 

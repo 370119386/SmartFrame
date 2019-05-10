@@ -82,7 +82,7 @@ namespace Smart.UI
             }
         }
 
-        public T OpenFrame<T>(GameObject parent,object argv = null,int frameId = -1) where T : ClientFrame,new()
+        public T OpenFrame<T>(object argv = null, int layer = 1,int frameId = -1) where T : ClientFrame,new()
         {
             CloseFrame<T>(frameId);
 
@@ -96,6 +96,14 @@ namespace Smart.UI
             T clientFrame = new T();
             frames.Add(clientFrame);
 
+            GameObject parent = null;
+            if(null != GameManager.Instance().Layers)
+            {
+                if (layer >= 0 && layer < GameManager.Instance().Layers.Length)
+                {
+                    parent = GameManager.Instance().Layers[layer];
+                }
+            }
             clientFrame.Open(frameId,parent,argv);
 
             return clientFrame;
