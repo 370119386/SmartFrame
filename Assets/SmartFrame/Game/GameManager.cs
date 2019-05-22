@@ -33,6 +33,20 @@ namespace Smart
             }
         }
 
+        [SerializeField]
+        protected AssetBundleList _bundleList;
+        public AssetBundleList AssetBundleList
+        {
+            get
+            {
+                return _bundleList;
+            }
+            set
+            {
+                _bundleList = value;
+            }
+        }
+
         protected Dictionary<string,string> configs = new Dictionary<string,string>();
 
         protected string Version
@@ -71,16 +85,57 @@ namespace Smart
             }
             Debug.LogFormat("[version]:{0}",Version);
 
-            // AssetBundleManager.Instance().DownLoadAssetBundle(gameConfig.gameResourcesServer,Application.version,@"fileMd5",
-            // (AssetBundle bundle)=>
-            // {
-            //     AssetBundleManifest manifest;
-            // }
-            // ,null);
+            AssetBundleList remoteAssetBundleList = null;
+            yield return AssetBundleManager.Instance().DownLoadAssetBundle(gameConfig.gameResourcesServer,Version,"filemd5",(AssetBundle bundle)=>
+            {
+                remoteAssetBundleList = bundle.LoadAsset<AssetBundleList>("AssetBundleMd5List.asset");
+                if(null != remoteAssetBundleList)
+                {
+                    AssetBundleList = remoteAssetBundleList;
+                    Debug.LogFormat("download assetbundle succeed ...");
+                }
+                else
+                {
+                    Debug.LogFormat("download assetbundle failed ...");
+                }
+            },
+            ()=>
+            {
+                Debug.LogFormat("download assetbundle failed ...");
+            });
 
-            //AssetBundleManager.Instance().DownLoadAssetBundles(gameConfig.gameResourcesServer,Application.version,)
+            if(null == AssetBundleList)
+            {
+                Debug.LogErrorFormat("load AssetBundleList failed ...");
+                yield break;
+            }
+            AssetBundleList.Make();
+
+            var bundles = new string[]
+            {
+                "filemd5","table","iOS"
+            };
+            var md5s = new string[]
+            {
+                AssetBundleList.getFileMd5(bundles[0]),
+                AssetBundleList.getFileMd5(bundles[1]),
+                AssetBundleList.getFileMd5(bundles[2]),
+            };
+
+            AssetBundleManager.Instance().AddDownLoadActionListener("baseBundle",bundles,OnDownLoadProcess,
+            ()=>
+            {
+                AssetBundleManager.Instance().RemoveDownLoadActionListener("baseBundle",OnDownLoadProcess);
+                Debug.LogFormat("DownLoad Finish ...");
+            });
+            AssetBundleManager.Instance().DownLoadAssetBundles(gameConfig.gameResourcesServer,Application.version,bundles,md5s);
 
             yield return null;
+        }
+
+        protected static void OnDownLoadProcess(float value)
+        {
+            Debug.LogFormat("<color=#ff00ff>[>>>>>> {0:F2}% >>>>></color>",value * 100.0f);
         }
 
         protected void onLoadGameConfigSucceed(string content)

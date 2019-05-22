@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4e6dc04c01d241d4bc8ae3722b4645d, type: 3}
+  m_Name: AssetBundleMd5List
+  m_EditorClassIdentifier: 
+  assetBundleItems:
+  - key: filemd5
+    md5: 349f205d5e4eec2f00cecdae64eb2f6c
+  - key: table
+    md5: e94798a7e65fe4983155c46de6e23a47
+  - key: iOS
+    md5: 552649a8504a0bf4477a6e3d00c5c960

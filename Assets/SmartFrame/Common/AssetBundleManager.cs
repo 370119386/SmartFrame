@@ -76,6 +76,8 @@ namespace Smart.Common
             {
                 var handler = new DownloadHandlerAssetBundle(url,0);
                 request.downloadHandler = handler;
+
+                Logger.LogFormat("[download]:url=[{0}]",url);
                 yield return request.SendWebRequest();
 
                 if(!string.IsNullOrEmpty(request.error))
@@ -90,7 +92,7 @@ namespace Smart.Common
 
                 if(request.isHttpError)
                 {
-                    Logger.LogFormat("[download]:[{0}] failed,HttpError",bundleName);
+                    Logger.LogFormat("[download]:[{0}] failed, url=[{1}],HttpError",bundleName,url);
                     if(null != onFailed)
                     {
                         onFailed.Invoke();
@@ -143,6 +145,88 @@ namespace Smart.Common
                    });
 
                 mDownLoadingHandlers.Add(key, handler);
+            }
+        }
+
+        protected class AssetBundleAnsyDownLoadListener
+        {
+            public string[] assetBundles;
+            public UnityAction<float> actionListener;
+            public bool isDone;
+            public UnityAction actionDone;
+        };
+        protected Dictionary<string,AssetBundleAnsyDownLoadListener> ansyDownLoadOperations = new Dictionary<string,AssetBundleAnsyDownLoadListener>(16);
+        protected void UpdateDownLoadProgress()
+        {
+            var iter = ansyDownLoadOperations.GetEnumerator();
+            while(iter.MoveNext())
+            {
+                var ansyDownloadActionListener = iter.Current.Value;
+                if(null == ansyDownloadActionListener.actionListener)
+                {
+                    continue;
+                }
+                var length = ansyDownloadActionListener.assetBundles.Length;
+                float sum = 0.0f;
+                bool isDone = true;
+                for(int i = 0 ; i < ansyDownloadActionListener.assetBundles.Length ; ++i)
+                {
+                    var assetBundleName = ansyDownloadActionListener.assetBundles[i];
+                    if(!mDownLoadingHandlers.ContainsKey(assetBundleName))
+                    {
+                        continue;
+                    }
+                    var handler = mDownLoadingHandlers[assetBundleName];
+                    sum += handler.progress;
+                    if(!handler.isDone)
+                    {
+                        isDone = false;
+                    }
+                }
+                
+                if(isDone)
+                {
+                    sum = 1.0f;
+                }
+                ansyDownloadActionListener.actionListener.Invoke(sum);
+                
+                if(isDone)
+                {
+                    if(null != ansyDownloadActionListener.actionDone)
+                    {
+                        ansyDownloadActionListener.actionDone.Invoke();
+                    }
+                }
+            }
+        }
+
+        public void AddDownLoadActionListener(string key,string[] assetBundles,UnityAction<float> actionListener,UnityAction onActionDone)
+        {
+            if(!ansyDownLoadOperations.ContainsKey(key))
+            {
+                ansyDownLoadOperations.Add(key,new AssetBundleAnsyDownLoadListener
+                {
+                    assetBundles = assetBundles,
+                    actionListener = actionListener,
+                    actionDone = onActionDone,
+                });
+            }
+            else
+            {
+                var ansyDownLoadListener = ansyDownLoadOperations[key];
+                ansyDownLoadListener.actionListener = System.Delegate.Remove(ansyDownLoadListener.actionListener,actionListener) as UnityAction<float>;
+                ansyDownLoadListener.actionListener = System.Delegate.Combine(ansyDownLoadListener.actionListener,actionListener) as UnityAction<float>;
+                ansyDownLoadListener.actionDone = System.Delegate.Remove(ansyDownLoadListener.actionDone,onActionDone) as UnityAction;
+                ansyDownLoadListener.actionDone = System.Delegate.Combine(ansyDownLoadListener.actionDone,onActionDone) as UnityAction;
+            }
+        }
+
+        public void RemoveDownLoadActionListener(string key,UnityAction<float> actionListener)
+        {
+            if(ansyDownLoadOperations.ContainsKey(key))
+            {
+                var ansyDownLoadListener = ansyDownLoadOperations[key];
+                ansyDownLoadListener.actionListener = System.Delegate.Remove(ansyDownLoadListener.actionListener,actionListener) as UnityAction<float>;
             }
         }
 
@@ -475,6 +559,7 @@ namespace Smart.Common
         {
             HttpDownLoadHandle.Update();
             UpdateProcess();
+            UpdateDownLoadProgress();
         }
 
         protected void OnDestroy()

@@ -22,7 +22,7 @@ namespace Smart.Common
         protected string checkMd5 = string.Empty;
         protected int downloadCnt = maxDownLoadCnt;
 
-        protected const int threadsCount = 2;
+        protected const int threadsCount = 1;
         protected const int maxDownLoadCnt = 5;
         protected static Thread[] threads = new Thread[threadsCount];
         protected static Dictionary<string,HttpDownLoadHandle> downloadList = new Dictionary<string, HttpDownLoadHandle>(32);
