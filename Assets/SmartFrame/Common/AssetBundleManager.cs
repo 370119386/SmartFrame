@@ -36,6 +36,87 @@ namespace Smart.Common
             DontDestroyOnLoad(gameObject);
         }
 
+        public IEnumerator DownLoadTextFile(string server,string platform,string fileName,UnityAction onFailed,UnityAction<string> onSucceed)
+        {
+            string url = System.IO.Path.Combine(server,System.IO.Path.Combine(platform,fileName));
+            using(UnityWebRequest request = UnityWebRequest.Get(url))
+            {
+                yield return request.SendWebRequest();
+                if(!string.IsNullOrEmpty(request.error))
+                {
+                    Logger.LogFormat("[download]:[{0}] failed,url:[{1}] Error:[{2}]",fileName,url,request.error);
+                    if(null != onFailed)
+                    {
+                        onFailed.Invoke();
+                    }
+                    yield break;
+                }
+
+                if(request.isHttpError)
+                {
+                    Logger.LogFormat("[download]:[{0}] failed,url:[{1}] HttpError",fileName,url);
+                    if(null != onFailed)
+                    {
+                        onFailed.Invoke();
+                    }
+                    yield break;
+                }
+
+                if(null != onSucceed)
+                {
+                    onSucceed.Invoke(request.downloadHandler.text);
+                }
+            }
+        }
+
+        public IEnumerator DownLoadAssetBundle(string server,string version,string bundleName,UnityAction<AssetBundle> onSucceed,UnityAction onFailed)
+        {
+            var url = Function.getAssetBundleDownloadUrl(server, version, bundleName);
+            using(UnityWebRequest request = UnityWebRequest.Get(url))
+            {
+                var handler = new DownloadHandlerAssetBundle(url,0);
+                request.downloadHandler = handler;
+                yield return request.SendWebRequest();
+
+                if(!string.IsNullOrEmpty(request.error))
+                {
+                    Logger.LogFormat("[download]:[{0}] failed,Error:[{1}]",bundleName,request.error);
+                    if(null != onFailed)
+                    {
+                        onFailed.Invoke();
+                    }
+                    yield break;
+                }
+
+                if(request.isHttpError)
+                {
+                    Logger.LogFormat("[download]:[{0}] failed,HttpError",bundleName);
+                    if(null != onFailed)
+                    {
+                        onFailed.Invoke();
+                    }
+                    yield break;
+                }
+
+                if(null == handler.assetBundle)
+                {
+                    Logger.LogFormat("[download]:[{0}] failed, assetBundle Is Null",bundleName);
+                    if(null != onFailed)
+                    {
+                        onFailed.Invoke();
+                    }
+                    yield break;
+                }
+
+                if(null != onSucceed)
+                {
+                    onSucceed.Invoke(handler.assetBundle);
+                }
+
+                handler.assetBundle.Unload(false);
+            }
+        }
+
         public void DownLoadAssetBundles(string server,string version,string[] assetBundles,string[] chekfileMd5s)
         {
             for(int i = 0 ; i < assetBundles.Length ; ++i)

@@ -23,6 +23,7 @@ namespace Smart.UI
         protected ClientFrame parentFrame = null;
         protected List<ClientFrame> childFrames = null;
         protected FrameConfigTableItem frameConfig = null;
+        protected ComScriptBinder mScriptBinder = null;
 
         protected static Smart.Common.ILogger Logger = new ModuleCommonLogger("ClientFrame");
 
@@ -105,6 +106,11 @@ namespace Smart.UI
             return null;
         }
 
+        protected virtual void _InitScriptBinder()
+        {
+
+        }
+
         public void Open(int frameId,GameObject root,object argv)
         {
             _frameId = frameId;
@@ -116,6 +122,8 @@ namespace Smart.UI
                 Logger.LogFormat("Open Frame Failed type = [{0}] frameId = [{1}]", GetType().Name,_frameId);
                 return;
             }
+            mScriptBinder = instance.GetComponent<ComScriptBinder>();
+            _InitScriptBinder();
 
             OnOpenFrame();
         }

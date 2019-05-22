@@ -1,0 +1,54 @@
+local util = require 'xlua.util'
+
+
+function start()
+    print("lua start...")
+
+    explorer:GetComponent("Button").onClick:AddListener(function()
+        print("explorer button clicked")
+        CS.AudioManager.Instance:PlaySound("fx_btnClicked")
+        loadSubScene(CS.Consts.UGameCategory.Explorer)
+    end)
+    
+    science:GetComponent("Button").onClick:AddListener(function()
+        print("science button clicked")
+        CS.AudioManager.Instance:PlaySound("fx_btnClicked")
+        loadSubScene(CS.Consts.UGameCategory.Science)
+    end)
+
+    learn:GetComponent("Button").onClick:AddListener(function()
+        print("learn button clicked")
+        CS.AudioManager.Instance:PlaySound("fx_btnClicked")
+        loadSubScene(CS.Consts.UGameCategory.Learn)
+    end)
+
+    entertainment:GetComponent("Button").onClick:AddListener(function()
+        print("entertainment button clicked")
+        CS.AudioManager.Instance:PlaySound("fx_btnClicked")
+        loadSubScene(CS.Consts.UGameCategory.Entertainment)
+    end)
+
+    video:GetComponent("Button").onClick:AddListener(function()
+        print("video button clicked")
+        CS.AudioManager.Instance:PlaySound("fx_btnClicked")
+        loadSubScene(CS.Consts.UGameCategory.Video)
+    end)
+
+end
+
+function update()
+end
+
+function ondestroy()
+    print("lua destroy")
+end
+
+function loadSubScene(subScene)
+    local controller = self:GetComponent("GameStartupController")
+    if controller ~= nil then
+        controller:showCategory(subScene)
+    else
+        print("Failed to find controller")
+    end
+end
+

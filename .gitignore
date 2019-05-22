@@ -6,3 +6,6 @@ obj/
 Temp/
 *.sln
 .vscode/launch.json
+AssetBundles/
+Assets/Plugins/
+Smart/

@@ -2,35 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Smart.Table;
+using Smart.Common;
 
 namespace Smart.UI
 {
-    public class UIManager : MonoBehaviour
+    public class UIManager : Singleton<UIManager>
     {
-        [SerializeField][Tooltip("界面配置数据")]
         protected FrameConfigTable frameConfigTable;
 
-        protected static UIManager ms_instance = null;
-        public static UIManager Instance()
+        public void Initialize(FrameConfigTable frameConfigs)
         {
-            if(null == ms_instance)
-            {
-                var gameObjecgt = new GameObject();
-                ms_instance = gameObjecgt.AddComponent<UIManager>();
-                ms_instance.frameConfigTable.MakeTable();
-            }
-            return ms_instance;
-        }
-
-        protected void Start()
-        {
-            if(null == ms_instance)
-            {
-                ms_instance = this;
-                frameConfigTable.MakeTable();
-            }
-            
-            DontDestroyOnLoad(gameObject);
+            frameConfigTable = frameConfigs;
         }
 
         protected Dictionary<System.Type,List<ClientFrame>> mActiveFrames = new Dictionary<System.Type, List<ClientFrame>>(32);

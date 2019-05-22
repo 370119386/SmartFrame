@@ -76,7 +76,7 @@ MonoBehaviour:
     m_AlignByGeometry: 0
     m_RichText: 0
     m_HorizontalOverflow: 1
-    m_VerticalOverflow: 0
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: "\u52A0\u8F7D\u4E2D"
 --- !u!1 &3444014153832939391
@@ -164,6 +164,7 @@ GameObject:
   - component: {fileID: 3444014153846817187}
   - component: {fileID: 3444014153846817185}
   - component: {fileID: 3444014153846817186}
+  - component: {fileID: 2269717503333041421}
   m_Layer: 0
   m_Name: LoadingFrame
   m_TagString: Untagged
@@ -228,6 +229,33 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
+--- !u!114 &2269717503333041421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3444014153846817188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29629f433a9ee4209b31c10ab7ded2c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  labelSpace: 
+  labelTypeId: -1
+  argumentsString: []
+  argumentsInt: 
+  argumentsFloat: []
+  scriptItems:
+  - iHashCode: -936434099
+    component: {fileID: 3444014153832939389}
+    varName: Progress
+    locked: 0
+  - iHashCode: 1435976809
+    component: {fileID: 5157573535533608774}
+    varName: LoadingText
+    locked: 0
+  scriptStatus: []
 --- !u!1 &3444014154808268136
 GameObject:
   m_ObjectHideFlags: 0

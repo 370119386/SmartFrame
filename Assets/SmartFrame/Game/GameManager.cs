@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Smart.Common;
 using Smart.Module;
+using Smart.UI;
+using Smart.Table;
 
 namespace Smart
 {
@@ -10,11 +12,15 @@ namespace Smart
     {
         [SerializeField]
         [Tooltip("游戏主要相机")]
-        public Camera mainCamera;
+        public Camera UIMainCamera;
 
         [SerializeField]
         [Tooltip("游戏层级")]
         public GameObject[] Layers = new GameObject[0];
+
+        [SerializeField]
+        [Tooltip("游戏界面配置")]
+        protected FrameConfigTable frameConfigs;
 
 
         [SerializeField]
@@ -27,6 +33,13 @@ namespace Smart
             }
         }
 
+        protected Dictionary<string,string> configs = new Dictionary<string,string>();
+
+        protected string Version
+        {
+            get;set;
+        }
+
         protected static GameManager ms_instance;
         public static GameManager Instance()
         {
@@ -35,25 +48,63 @@ namespace Smart
 
         protected void Awake()
         {
-            ModuleManager.Instance().RegisterModules();
-            ModuleManager.Instance().AwakeModules();
+            ms_instance = this;
         }
 
-        void Start()
+        IEnumerator Start()
         {
-            ms_instance = this;
+            Debug.LogFormat("[GameManager]:Start()");
             DontDestroyOnLoad(gameObject);
 
-            var baseModule = ModuleManager.Instance().GetModule(EnumModuleType.EMT_BASE_MODULE);
-            baseModule.Create(this);
+            Version = Application.version;
+            UIManager.Instance().Initialize(frameConfigs);
 
-            GameLoading.Loading(baseModule.AnsyEnter(),()=>{return true;},null,null);
+            UIManager.Instance().OpenFrame<LoadingFrame>(null,7);
+
+            //加载线上版本
+            bool succeed = true;
+            yield return AssetBundleManager.Instance().DownLoadTextFile(gameConfig.gameResourcesServer,Function.getPlatformString(),"gameConfig.txt",
+            ()=>{succeed = false;},onLoadGameConfigSucceed);
+            if(configs.ContainsKey(@"version"))
+            {
+                Version = configs[@"version"];
+            }
+            Debug.LogFormat("[version]:{0}",Version);
+
+            // AssetBundleManager.Instance().DownLoadAssetBundle(gameConfig.gameResourcesServer,Application.version,@"fileMd5",
+            // (AssetBundle bundle)=>
+            // {
+            //     AssetBundleManifest manifest;
+            // }
+            // ,null);
+
+            //AssetBundleManager.Instance().DownLoadAssetBundles(gameConfig.gameResourcesServer,Application.version,)
+
+            yield return null;
+        }
+
+        protected void onLoadGameConfigSucceed(string content)
+        {
+            Debug.LogFormat("[gameconfig]:{0}",content);
+            configs.Clear();
+            var lines = content.Split('\r','\n');
+            for(int i = 0 ; i < lines.Length; ++i)
+            {
+                var tokens = lines[i].Split(':');
+                if(tokens.Length != 2)
+                {
+                    continue;
+                }
+                if(!configs.ContainsKey(tokens[0]))
+                {
+                    configs.Add(tokens[0],tokens[1]);
+                }
+            }
         }
 
         protected void OnDestroy()
         {
-            var baseModule = ModuleManager.Instance().GetModule(EnumModuleType.EMT_BASE_MODULE);
-            baseModule.Exit();
+
         }
     }
 }

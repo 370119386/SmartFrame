@@ -1,0 +1,41 @@
+local util = require 'xlua.util'
+
+local yield_return = (require 'LuaScripts/cs_coroutine').yield_return
+
+local serverApiAddress = "https://api.66uu.cn/kids/IOS/"
+
+function start()
+    print("lua start...")
+    local version = CS.AuScience.GameData.getCurrentVersion()
+    print("current version = " .. version)
+
+    local co = coroutine.create(function()
+        print("start checking version now")
+        print('coroutine start!')
+        local s = os.time()
+        yield_return(CS.UnityEngine.WaitForSeconds(3))
+        print('wait interval:', os.time() - s)
+
+        local versionCheckFile = serverApiAddress .. 'VersionPatch_' .. version
+        print('version check file url = ' .. versionCheckFile)
+
+        local www = CS.UnityEngine.WWW(versionCheckFile)
+        yield_return(www)
+        if not www.error then
+            print(www.bytes)
+        else
+            print('error:', www.error_num_ror)
+            print("Current is version is the lastest one")
+        end
+    end)
+
+    assert(coroutine.resume(co))
+end
+
+function update()
+end
+
+function ondestroy()
+    print("lua destroy")
+end
+
