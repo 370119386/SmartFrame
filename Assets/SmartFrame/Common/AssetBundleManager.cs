@@ -131,17 +131,17 @@ namespace Smart.Common
 
                 var bundleName = assetBundles[i];
                 var url = Function.getAssetBundleDownloadUrl(server, version, bundleName);
-                Debug.LogFormat("[download]:url:[<color=#00ffff>{0}</color>]", url);
+                Debug.LogFormat("<color=#ff00ff>[download]</color>:url:[<color=#00ffff>{0}</color>]", url);
                 var storepath = Function.getAssetBundlePersistentPath(version, string.Empty, false);
-                Debug.LogFormat("[download]:storepath:[<color=#00ffff>{0}</color>]", storepath);
+                Debug.LogFormat("<color=#ff00ff>[download]</color>:storepath:[<color=#00ffff>{0}</color>]", storepath);
 
                 var handler = HttpDownLoadHandle.Get(url, storepath, assetBundles[i], chekfileMd5s[i],() =>
                    {
-                       Debug.LogFormat("[download]:bundleName:[<color=#00ffff>{0}</color>] succeed", bundleName);
+                       Debug.LogFormat("<color=#ff00ff>[download]</color>:bundleName:[<color=#00ffff>{0}</color>] succeed", bundleName);
                    },
                    () =>
                    {
-                       Debug.LogFormat("[download]:bundleName:[<color=#ff0000>{0}</color>] failed", bundleName);
+                       Debug.LogFormat("<color=#ff00ff>[download]</color>:bundleName:[<color=#ff0000>{0}</color>] failed", bundleName);
                    });
 
                 mDownLoadingHandlers.Add(key, handler);
@@ -151,6 +151,7 @@ namespace Smart.Common
         protected class AssetBundleAnsyDownLoadListener
         {
             public string[] assetBundles;
+            public string[] keys;
             public UnityAction<float> actionListener;
             public bool isDone;
             public UnityAction actionDone;
@@ -168,15 +169,18 @@ namespace Smart.Common
                 }
                 var length = ansyDownloadActionListener.assetBundles.Length;
                 float sum = 0.0f;
+                float percent = 0.0f;
                 bool isDone = true;
                 for(int i = 0 ; i < ansyDownloadActionListener.assetBundles.Length ; ++i)
                 {
                     var assetBundleName = ansyDownloadActionListener.assetBundles[i];
-                    if(!mDownLoadingHandlers.ContainsKey(assetBundleName))
+                    var key = ansyDownloadActionListener.keys[i];
+                    if(!mDownLoadingHandlers.ContainsKey(key))
                     {
+                        isDone = false;
                         continue;
                     }
-                    var handler = mDownLoadingHandlers[assetBundleName];
+                    var handler = mDownLoadingHandlers[key];
                     sum += handler.progress;
                     if(!handler.isDone)
                     {
@@ -186,10 +190,14 @@ namespace Smart.Common
                 
                 if(isDone)
                 {
-                    sum = 1.0f;
+                    percent = 1.0f;
                 }
-                ansyDownloadActionListener.actionListener.Invoke(sum);
-                
+                else
+                {
+                    percent = sum / length;
+                }
+                ansyDownloadActionListener.actionListener.Invoke(percent);
+
                 if(isDone)
                 {
                     if(null != ansyDownloadActionListener.actionDone)
@@ -200,12 +208,18 @@ namespace Smart.Common
             }
         }
 
-        public void AddDownLoadActionListener(string key,string[] assetBundles,UnityAction<float> actionListener,UnityAction onActionDone)
+        public void AddDownLoadActionListener(string key,string version,string[] assetBundles,UnityAction<float> actionListener,UnityAction onActionDone)
         {
             if(!ansyDownLoadOperations.ContainsKey(key))
             {
+                var keys = new string[assetBundles.Length];
+                for(int i = 0 ; i < assetBundles.Length; ++i)
+                {
+                    keys[i] = string.Format(version + "_" + assetBundles[i]);
+                }
                 ansyDownLoadOperations.Add(key,new AssetBundleAnsyDownLoadListener
                 {
+                    keys = keys,
                     assetBundles = assetBundles,
                     actionListener = actionListener,
                     actionDone = onActionDone,
@@ -381,11 +395,12 @@ namespace Smart.Common
                 }
             }
 
-            string[] values = new string[alreadyExist.Keys.Count];
-            var keyIter = alreadyExist.Keys.GetEnumerator();
+            var iter = alreadyExist.GetEnumerator();
+            string[] values = new string[alreadyExist.Count];
             for(int i = 0 ; i < values.Length ; ++i)
             {
-                values[i] = keyIter.Current;
+                iter.MoveNext();
+                values[i] = iter.Current.Key;
             }
 
             return values;

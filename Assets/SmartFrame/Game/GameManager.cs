@@ -122,20 +122,40 @@ namespace Smart
                 AssetBundleList.getFileMd5(bundles[2]),
             };
 
-            AssetBundleManager.Instance().AddDownLoadActionListener("baseBundle",bundles,OnDownLoadProcess,
+            bool isDone = false;
+            AssetBundleManager.Instance().AddDownLoadActionListener("baseBundle",Version,bundles,OnDownLoadProcess,
             ()=>
             {
                 AssetBundleManager.Instance().RemoveDownLoadActionListener("baseBundle",OnDownLoadProcess);
+                isDone = true;
                 Debug.LogFormat("DownLoad Finish ...");
             });
-            AssetBundleManager.Instance().DownLoadAssetBundles(gameConfig.gameResourcesServer,Application.version,bundles,md5s);
+            AssetBundleManager.Instance().DownLoadAssetBundles(gameConfig.gameResourcesServer,Version,bundles,md5s);
 
-            yield return null;
+            while(!isDone)
+                yield return null;
+
+            yield return AssetBundleManager.Instance().LoadAssetBundleManifest(gameConfig.gameResourcesServer,Version,null,()=>
+            {
+                succeed = false;
+            });
+            if(!succeed)
+            {
+                Debug.LogErrorFormat("Load AssetBundleManifest Failed ...");
+                yield break;
+            }
+            
+            //var storepath = Function.getAssetBundlePersistentPath(Version, string.Empty, false);
+
+            //yield return AssetBundleManager.Instance().LoadAssetBundlesEnumerator(storepath,bundles,null,null,(float value)=>
+            //{
+             //   Debug.LogFormat("<color=#ff00ff>[Loading >>>>>> {0:F2}% >>>>></color>",value * 100.0f);
+            //});
         }
 
         protected static void OnDownLoadProcess(float value)
         {
-            Debug.LogFormat("<color=#ff00ff>[>>>>>> {0:F2}% >>>>></color>",value * 100.0f);
+            Debug.LogFormat("<color=#ff00ff>[>>>>>> {0:F2}% >>>>>]</color>",value * 100.0f);
         }
 
         protected void onLoadGameConfigSucceed(string content)

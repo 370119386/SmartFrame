@@ -173,6 +173,8 @@ namespace Smart.Common
                                 fileLength = fs.Length;
                                 needReCheck = false;
                                 handler.downloadCnt -= 1;
+                                handler.progress = 0.0f;
+                                handler.isDone = false;
                                 LogData.LogFormat("[文件下载]:[{0}]:校验文件MD5码失败,需要重新下载,扔回队列等待重下", handler.fileName);
 
                                 if (handler.downloadCnt <= 0)
@@ -199,6 +201,8 @@ namespace Smart.Common
                             else
                             {
                                 LogData.LogFormat("[文件下载]:[{0}]:校验文件MD5码成功，不需要重新下载", handler.fileName);
+                                handler.progress = 1.0f;
+                                handler.isDone = true;
                                 var actionSucceed = handler.onSucceed;
                                 needReCheck = false;
                                 lock (lock_obj)
@@ -259,9 +263,6 @@ namespace Smart.Common
                             stream.Close();
                         }
 
-                        fs.Flush();
-                        fs.Close();
-
                         if (needReCheck)
                         {
                             LogData.LogFormat("[文件下载]:[{0}]:需要重新校验", handler.fileName);
@@ -273,9 +274,14 @@ namespace Smart.Common
                             checkOk = true;
                         }
 
+                        fs.Flush();
+                        fs.Close();
+
                         if (checkOk)
                         {
                             LogData.LogFormat("[文件下载]:[{0}]:文件下载成功", handler.fileName);
+                            handler.progress = 1.0f;
+                            handler.isDone = true;
                             lock (lock_obj)
                             {
                                 downloadActions.Add(handler.onSucceed);
@@ -286,6 +292,8 @@ namespace Smart.Common
                         {
                             LogData.LogFormat("[文件下载]:[{0}]:重新校验文件失败,扔回队列等待重下", handler.fileName);
                             handler.downloadCnt -= 1;
+                            handler.progress = 0.0f;
+                            handler.isDone = false;
                             fs.SetLength(0);
 
                             if (handler.downloadCnt <= 0)
@@ -293,6 +301,7 @@ namespace Smart.Common
                                 LogData.LogErrorFormat("[文件下载]:[{0}]:重下次数已经用完", handler.fileName);
                                 var actionFailed = handler.onFailed;
                                 handler.onFailed = null;
+                                handler.isDone = true;
                                 lock (lock_obj)
                                 {
                                     downloadActions.Add(actionFailed);
@@ -315,6 +324,8 @@ namespace Smart.Common
                     if(handler.downloadCnt <= 0)
                     {
                         LogData.LogErrorFormat("[文件下载]:[{0}]:下载异常:重下次数已经用完", handler.fileName);
+                        handler.isDone = true;
+                        handler.progress = 0.0f;
                         var actionFailed = handler.onFailed;
                         handler.onFailed = null;
                         lock (lock_obj)
