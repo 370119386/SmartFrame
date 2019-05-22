@@ -296,6 +296,7 @@ namespace Smart.Common
             for(int i = 0 ; i < bundleNames.Length  && succeed ; ++i)
             {
                 var url = System.IO.Path.Combine(path,bundleNames[i]);
+                Debug.LogFormat("[download]:url:{0}",url);
                 yield return LoadAssetBundle(url,onBundleLoadSucceed,()=>{succeed = false;},listener);
             }
 
@@ -445,6 +446,7 @@ namespace Smart.Common
                  {
                      onSucceed.Invoke();
                  }
+                 assetBundle.Unload(false);
              },onFailed,null);
         }
 

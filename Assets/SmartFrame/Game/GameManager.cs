@@ -145,12 +145,12 @@ namespace Smart
                 yield break;
             }
             
-            //var storepath = Function.getAssetBundlePersistentPath(Version, string.Empty, false);
+            var storepath = Function.getAssetBundlePersistentPath(Version, string.Empty, true);
 
-            //yield return AssetBundleManager.Instance().LoadAssetBundlesEnumerator(storepath,bundles,null,null,(float value)=>
-            //{
-             //   Debug.LogFormat("<color=#ff00ff>[Loading >>>>>> {0:F2}% >>>>></color>",value * 100.0f);
-            //});
+            yield return AssetBundleManager.Instance().LoadAssetBundlesEnumerator(storepath,bundles,null,null,(float value)=>
+            {
+               Debug.LogFormat("<color=#ff00ff>[Loading >>>>>> {0:F2}% >>>>></color>",value * 100.0f);
+            });
         }
 
         protected static void OnDownLoadProcess(float value)
