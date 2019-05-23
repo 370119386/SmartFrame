@@ -136,6 +136,8 @@ namespace Smart.UI
             }
             isopen = false;
 
+            UIManager.Instance().RemoveFrame(this);
+
             if(null != childFrames)
             {
                 List<ClientFrame> handles = new List<ClientFrame>(childFrames.Count);

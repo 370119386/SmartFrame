@@ -46,6 +46,20 @@ namespace Smart.UI
             return null;
         }
 
+        public void RemoveFrame<T>(T frame) where T : ClientFrame,new()
+        {
+            var type = frame.GetType();
+            if(!mActiveFrames.ContainsKey(type))
+            {
+                return;
+            }
+
+            if(mActiveFrames[type].Remove(frame))
+            {
+                Debug.LogFormat("<color=#ff00ff>[UIManager]</color>:<color=#00ffff>[{0}] Has Been Removed ...</color>",type.FullName);
+            }
+        }
+
         public void CloseFrame<T>(int frameId = -1) where T : ClientFrame,new()
         {
             if(!mActiveFrames.ContainsKey(typeof(T)))
@@ -54,13 +68,19 @@ namespace Smart.UI
             }
 
             var frames = mActiveFrames[typeof(T)];
+            ClientFrame frame = null;
             for(int i = 0 ; i < frames.Count ; ++i)
             {
                 if(frames[i].frameId == frameId)
                 {
-                    frames[i].Close();
+                    frame = frames[i];
                     break;
                 }
+            }
+
+            if(null != frame)
+            {
+                frame.Close();
             }
         }
 
