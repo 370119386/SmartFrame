@@ -13,6 +13,9 @@ public class AssetBundleItem
 public class AssetBundleList : ScriptableObject
 {
     public AssetBundleItem[] assetBundleItems = new AssetBundleItem[0];
+    public string[] baseAssetBundles = new string[0];
+    [HideInInspector]
+    public string[] baseKeys = new string[0];
 
     protected Dictionary<string,AssetBundleItem> itemDic;
     public void Make()
@@ -31,6 +34,12 @@ public class AssetBundleList : ScriptableObject
             {
                 itemDic.Add(item.key,item);
             }
+        }
+
+        baseKeys = new string[baseAssetBundles.Length];
+        for(int i = 0 ; i < baseAssetBundles.Length ; ++i)
+        {
+            baseKeys[i] = getFileMd5(baseAssetBundles[i]);
         }
     }
     public string getFileMd5(string key)

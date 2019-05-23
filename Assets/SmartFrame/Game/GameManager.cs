@@ -5,6 +5,7 @@ using Smart.Common;
 using Smart.Module;
 using Smart.UI;
 using Smart.Table;
+using Smart.Event;
 
 namespace Smart
 {
@@ -111,26 +112,15 @@ namespace Smart
             }
             AssetBundleList.Make();
 
-            var bundles = new string[]
-            {
-                "filemd5","table","iOS"
-            };
-            var md5s = new string[]
-            {
-                AssetBundleList.getFileMd5(bundles[0]),
-                AssetBundleList.getFileMd5(bundles[1]),
-                AssetBundleList.getFileMd5(bundles[2]),
-            };
-
             bool isDone = false;
-            AssetBundleManager.Instance().AddDownLoadActionListener("baseBundle",Version,bundles,OnDownLoadProcess,
+            AssetBundleManager.Instance().AddDownLoadActionListener("baseBundle",Version,AssetBundleList.baseAssetBundles,OnDownLoadProcess,
             ()=>
             {
                 AssetBundleManager.Instance().RemoveDownLoadActionListener("baseBundle",OnDownLoadProcess);
                 isDone = true;
                 Debug.LogFormat("DownLoad Finish ...");
             });
-            AssetBundleManager.Instance().DownLoadAssetBundles(gameConfig.gameResourcesServer,Version,bundles,md5s);
+            AssetBundleManager.Instance().DownLoadAssetBundles(gameConfig.gameResourcesServer,Version,AssetBundleList.baseAssetBundles,AssetBundleList.baseKeys);
 
             while(!isDone)
                 yield return null;
@@ -147,15 +137,17 @@ namespace Smart
             
             var storepath = Function.getAssetBundlePersistentPath(Version, string.Empty, true);
 
-            yield return AssetBundleManager.Instance().LoadAssetBundlesEnumerator(storepath,bundles,null,null,(float value)=>
+            yield return AssetBundleManager.Instance().LoadAssetBundlesEnumerator(storepath,AssetBundleList.baseAssetBundles,null,null,(float value)=>
             {
-               Debug.LogFormat("<color=#ff00ff>[Loading >>>>>> {0:F2}% >>>>></color>",value * 100.0f);
+                EventManager.Instance().SendEvent(Event.Event.EventLoadingProgress,value * 0.50f + 0.50f);
             });
+
+            EventManager.Instance().SendEvent(Event.Event.EventEndLoading);
         }
 
         protected static void OnDownLoadProcess(float value)
         {
-            Debug.LogFormat("<color=#ff00ff>[>>>>>> {0:F2}% >>>>>]</color>",value * 100.0f);
+            EventManager.Instance().SendEvent(Event.Event.EventLoadingProgress,value * 0.50f);
         }
 
         protected void onLoadGameConfigSucceed(string content)

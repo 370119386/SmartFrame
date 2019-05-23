@@ -94,6 +94,11 @@ namespace Smart.Editor
             var storePath = @"Assets/Resources/Data/";;
             var bundleMd5List = Scriptablity.Create<AssetBundleList>(storePath,"AssetBundleMd5List");
             bundleMd5List.assetBundleItems = assetBundleItems.ToArray();
+            bundleMd5List.baseAssetBundles = new string[]
+            {
+                platform,
+                "table",
+            };
             EditorUtility.SetDirty(bundleMd5List);
             AssetDatabase.SaveAssets();
             assetBundle.Unload(true);

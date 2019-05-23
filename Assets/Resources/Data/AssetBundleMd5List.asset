@@ -14,8 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   assetBundleItems:
   - key: filemd5
-    md5: cb24c748a385dee8170c910150807e46
+    md5: 4a7e357da0d2094fa6b12cfdee6df192
   - key: table
     md5: e94798a7e65fe4983155c46de6e23a47
   - key: iOS
-    md5: 2953974224b2b6ea330303636c039cdb
+    md5: 10cceb4e20a433cd2dac6672e3942fa1
+  baseAssetBundles:
+  - iOS
+  - table
+  baseKeys: []
