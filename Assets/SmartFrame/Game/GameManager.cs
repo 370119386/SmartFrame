@@ -77,9 +77,8 @@ namespace Smart
             UIManager.Instance().OpenFrame<LoadingFrame>(null,7);
 
             //加载线上版本
-            bool succeed = true;
             yield return AssetBundleManager.Instance().DownLoadTextFile(gameConfig.gameResourcesServer,Function.getPlatformString(),"gameConfig.txt",
-            ()=>{succeed = false;},onLoadGameConfigSucceed);
+            null,onLoadGameConfigSucceed);
             if(configs.ContainsKey(@"version"))
             {
                 Version = configs[@"version"];
@@ -125,6 +124,7 @@ namespace Smart
             while(!isDone)
                 yield return null;
 
+            bool succeed = true;
             yield return AssetBundleManager.Instance().LoadAssetBundleManifest(gameConfig.gameResourcesServer,Version,null,()=>
             {
                 succeed = false;
